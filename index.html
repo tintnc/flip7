@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flip 7 - Score Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="language-switcher">
+                <button id="langBtn" class="lang-btn" title="Switch language">
+                    <span id="currentLang">EN</span>
+                </button>
+            </div>
+            <h1 data-i18n="title">🎴 Flip 7 Score Tracker</h1>
+            <p class="subtitle" data-i18n="subtitle">Track points per round. First player to reach 200 points wins!</p>
+        </header>
+
+        <section class="player-management">
+            <h2 data-i18n="players">Players</h2>
+            <div class="add-player-form">
+                <input 
+                    type="text" 
+                    id="playerNameInput" 
+                    data-i18n-placeholder="enterPlayerName"
+                    maxlength="20"
+                >
+                <button id="addPlayerBtn" class="btn btn-primary" data-i18n="addPlayer">Add Player</button>
+            </div>
+            <div id="playersList" class="players-list"></div>
+        </section>
+
+        <section class="current-round">
+            <h2><span data-i18n="round">Round</span> <span id="currentRoundNumber">1</span> - <span data-i18n="enterScores">Enter Scores</span></h2>
+            <div id="roundScoreInputs" class="round-score-inputs"></div>
+            <div class="round-actions">
+                <button id="submitRoundBtn" class="btn btn-primary" disabled data-i18n="submitRound">Submit Round Scores</button>
+                <button id="resetGameBtn" class="btn btn-danger" data-i18n="resetGame">Reset Game</button>
+            </div>
+        </section>
+
+        <section class="score-board">
+            <h2 data-i18n="scoreBoard">Score Board</h2>
+            <div id="scoreBoard" class="score-board-grid"></div>
+        </section>
+
+        <section class="round-history">
+            <h2 data-i18n="roundHistory">Round History</h2>
+            <div id="roundHistory" class="history-container"></div>
+        </section>
+
+        <div id="winnerBanner" class="winner-banner hidden">
+            <div class="winner-content">
+                <h2 data-i18n="winner">🎉 Winner!</h2>
+                <p id="winnerText"></p>
+                <button id="closeWinnerBtn" class="btn btn-primary" data-i18n="continuePlaying">Continue Playing</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
