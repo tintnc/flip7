@@ -13,6 +13,7 @@ const translations = {
         enterPlayerName: 'Enter player name',
         addPlayer: 'Add Player',
         resetPlayers: 'Reset All Players',
+        dragHandleLabel: 'Drag to reorder',
         round: 'Round',
         enterScores: 'Enter Scores',
         simpleMode: 'Simple Mode',
@@ -72,6 +73,7 @@ const translations = {
         enterPlayerName: 'Nhập tên người chơi',
         addPlayer: 'Thêm Người Chơi',
         resetPlayers: 'Xóa Tất Cả Người Chơi',
+        dragHandleLabel: 'Kéo để đổi vị trí',
         round: 'Vòng',
         enterScores: 'Nhập Điểm',
         simpleMode: 'Chế Độ Đơn Giản',
@@ -137,6 +139,11 @@ class Flip7Tracker {
         this.scoringMode = saved?.scoringMode || 'simple';
         this.scoreRules = Array.isArray(saved?.scoreRules) && saved.scoreRules.length ? saved.scoreRules : [...DEFAULT_RULES];
         this.roundDraft = {};
+        this.draggingPlayerId = null;
+        this.handleRowDragStart = this.handleRowDragStart.bind(this);
+        this.handleRowDragOver = this.handleRowDragOver.bind(this);
+        this.handleRowDrop = this.handleRowDrop.bind(this);
+        this.handleRowDragEnd = this.handleRowDragEnd.bind(this);
         this.pendingPreview = null;
         this.editingRoundIndex = null;
         this.init();
@@ -195,10 +202,6 @@ class Flip7Tracker {
             const playerId = tag.dataset.playerId;
             if (event.target.classList.contains('remove-btn')) {
                 this.removePlayer(playerId);
-                return;
-            }
-            if (event.target.classList.contains('move-btn')) {
-                this.movePlayer(playerId, event.target.dataset.direction);
             }
         });
         const roundInputs = document.getElementById('roundScoreInputs');
@@ -336,19 +339,6 @@ class Flip7Tracker {
         this.saveGameState();
     }
 
-    movePlayer(playerId, direction) {
-        const index = this.players.findIndex(player => player.id === playerId);
-        if (index === -1) return;
-        if (direction === 'up' && index === 0) return;
-        if (direction === 'down' && index === this.players.length - 1) return;
-        const target = direction === 'up' ? index - 1 : index + 1;
-        [this.players[index], this.players[target]] = [this.players[target], this.players[index]];
-        this.renderPlayers();
-        this.renderRoundInputs();
-        this.renderRoundHistory();
-        this.saveGameState();
-    }
-
     resetPlayers() {
         if (!this.players.length) return;
         if (!confirm(this.t('resetPlayersConfirm'))) return;
@@ -384,10 +374,8 @@ class Flip7Tracker {
             container.innerHTML = `<div class="empty-state"><p>${this.t('noPlayers')}</p></div>`;
             return;
         }
-        container.innerHTML = this.players.map((player, index) => `
+        container.innerHTML = this.players.map((player) => `
             <div class="player-tag" data-player-id="${player.id}">
-                <button class="move-btn" data-direction="up" ${index === 0 ? 'disabled' : ''}>▲</button>
-                <button class="move-btn" data-direction="down" ${index === this.players.length - 1 ? 'disabled' : ''}>▼</button>
                 <span>${this.escapeHtml(player.name)}</span>
                 <button class="remove-btn" title="${this.t('removePlayerTitle')}">×</button>
             </div>
@@ -413,10 +401,12 @@ class Flip7Tracker {
             const lockedChip = entry.frozen && entry.score !== null
                 ? `<div class="score-chip">${this.t('lockedScoreLabel')}: ${this.formatScoreWithIcons(entry.score)}</div>`
                 : '';
-
+            const inputId = this.scoringMode === 'simple'
+                ? `score-${player.id}`
+                : `expression-${player.id}`;
             const inputArea = this.scoringMode === 'simple'
-                ? `<input type="number" class="simple-score" id="score-${player.id}" min="0" step="1" value="${entry.frozen && entry.score !== null ? entry.score : (entry.pendingScore ?? 0)}" ${entry.frozen ? 'disabled' : ''}>`
-                : `<textarea class="advanced-input" id="expression-${player.id}" placeholder="${this.t('enterExpressionPlaceholder')}" ${entry.frozen ? 'disabled' : ''}>${entry.expression || ''}</textarea>`;
+                ? `<input type="number" class="simple-score" id="${inputId}" min="0" step="1" value="${entry.frozen && entry.score !== null ? entry.score : (entry.pendingScore ?? 0)}" ${entry.frozen ? 'disabled' : ''}>`
+                : `<textarea class="advanced-input" id="${inputId}" placeholder="${this.t('enterExpressionPlaceholder')}" ${entry.frozen ? 'disabled' : ''}>${entry.expression || ''}</textarea>`;
 
             const previewButton = this.scoringMode === 'advanced'
                 ? `<button class="btn btn-secondary btn-small preview-btn" data-player-id="${player.id}" ${entry.frozen ? 'disabled' : ''}>${this.t('previewButton')}</button>`
@@ -428,7 +418,10 @@ class Flip7Tracker {
 
             return `
                 <div class="score-input-row" data-player-id="${player.id}">
-                    <label for="score-${player.id}">${this.escapeHtml(player.name)}${labelIcon}</label>
+                    <div class="row-header">
+                        <span class="drag-handle" role="button" aria-label="${this.t('dragHandleLabel')}" title="${this.t('dragHandleLabel')}">⋮⋮</span>
+                        <label for="${inputId}">${this.escapeHtml(player.name)}${labelIcon}</label>
+                    </div>
                     ${inputArea}
                     <div class="score-actions">
                         <span class="status-pill ${statusClass}">${statusLabel}</span>
@@ -444,6 +437,58 @@ class Flip7Tracker {
         }).join('');
 
         this.updateSubmitState();
+        this.enableRoundDragAndDrop();
+    }
+
+    enableRoundDragAndDrop() {
+        const container = document.getElementById('roundScoreInputs');
+        if (!container) return;
+        const rows = container.querySelectorAll('.score-input-row');
+        rows.forEach(row => {
+            row.setAttribute('draggable', 'true');
+            row.addEventListener('dragstart', this.handleRowDragStart);
+            row.addEventListener('dragover', this.handleRowDragOver);
+            row.addEventListener('drop', this.handleRowDrop);
+            row.addEventListener('dragend', this.handleRowDragEnd);
+        });
+    }
+
+    handleRowDragStart(event) {
+        const row = event.currentTarget;
+        this.draggingPlayerId = row.dataset.playerId;
+        row.classList.add('dragging');
+        event.dataTransfer.effectAllowed = 'move';
+    }
+
+    handleRowDragOver(event) {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+    }
+
+    handleRowDrop(event) {
+        event.preventDefault();
+        const targetId = event.currentTarget.dataset.playerId;
+        if (!this.draggingPlayerId || this.draggingPlayerId === targetId) {
+            return;
+        }
+        this.reorderPlayersById(this.draggingPlayerId, targetId);
+    }
+
+    handleRowDragEnd(event) {
+        event.currentTarget.classList.remove('dragging');
+        this.draggingPlayerId = null;
+    }
+
+    reorderPlayersById(sourceId, targetId) {
+        const fromIndex = this.players.findIndex(player => player.id === sourceId);
+        const toIndex = this.players.findIndex(player => player.id === targetId);
+        if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return;
+        const [moved] = this.players.splice(fromIndex, 1);
+        this.players.splice(toIndex, 0, moved);
+        this.renderPlayers();
+        this.renderRoundInputs();
+        this.renderRoundHistory();
+        this.saveGameState();
     }
 
     handleConfirmScore(playerId) {

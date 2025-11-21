@@ -220,24 +220,6 @@ section h2 {
     font-weight: 500;
 }
 
-.player-tag .move-btn {
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    color: white;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.player-tag .move-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
 .player-tag .remove-btn {
     background: rgba(255, 255, 255, 0.3);
     border: none;
@@ -303,6 +285,24 @@ section h2 {
     background: var(--bg-color);
     border-radius: 8px;
     border: 2px solid var(--border-color);
+}
+
+.row-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.drag-handle {
+    cursor: grab;
+    user-select: none;
+    font-size: 1.3rem;
+    color: var(--text-secondary);
+}
+
+.score-input-row.dragging {
+    opacity: 0.6;
 }
 
 .score-input-row label {

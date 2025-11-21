@@ -7,6 +7,7 @@ A lightweight, static web application for tracking scores in the Flip 7 board ga
 - **🎮 Dual Scoring Modes**: Simple numeric entry or advanced expression parser (`5 10 +2 x2`) with preview modal
 - **🧊 Freeze Workflow**: Per-player confirm/unfreeze controls ensure each turn is locked before submitting
 - **📊 Ranked History**: Round table shows Top 1/2/3 per round, supports in-place editing with auto-recalculation
+- **↕️ Drag Reorder**: Rearrange players directly in the scoring panel via drag handles
 - **🌐 Multilingual UI**: Toggle English ↔ Vietnamese instantly; all copy translated
 - **🧩 Rule Mapping**: Configure custom score → icon rules (defaults: `36🍀`, `18✌️`) directly in the UI
 - **🏆 Celebration Layer**: First player to hit 200 points triggers a banner + confetti animation
