@@ -9,10 +9,15 @@
 <body>
     <div class="container">
         <header>
-            <div class="language-switcher">
-                <button id="langBtn" class="lang-btn" title="Switch language">
-                    <span id="currentLang">EN</span>
-                </button>
+            <div class="header-row">
+                <div class="language-switcher">
+                    <button id="langBtn" class="lang-btn" title="Switch language">
+                        <span id="currentLang">EN</span>
+                    </button>
+                </div>
+                <div class="header-actions">
+                    <button id="rulesBtn" class="btn btn-light" data-i18n="rulesButton">Rules & Settings</button>
+                </div>
             </div>
             <h1 data-i18n="title">🎴 Flip 7 Score Tracker</h1>
             <p class="subtitle" data-i18n="subtitle">Track points per round. First player to reach 200 points wins!</p>
@@ -30,10 +35,19 @@
                 <button id="addPlayerBtn" class="btn btn-primary" data-i18n="addPlayer">Add Player</button>
             </div>
             <div id="playersList" class="players-list"></div>
+            <div class="player-controls">
+                <button id="resetPlayersBtn" class="btn btn-warning" data-i18n="resetPlayers">Reset All Players</button>
+            </div>
         </section>
 
         <section class="current-round">
-            <h2><span data-i18n="round">Round</span> <span id="currentRoundNumber">1</span> - <span data-i18n="enterScores">Enter Scores</span></h2>
+            <div class="round-header">
+                <h2><span data-i18n="round">Round</span> <span id="currentRoundNumber">1</span> - <span data-i18n="enterScores">Enter Scores</span></h2>
+                <div class="scoring-tabs" role="tablist">
+                    <button class="tab-button active" data-mode="simple" id="simpleModeTab" data-i18n="simpleMode">Simple Mode</button>
+                    <button class="tab-button" data-mode="advanced" id="advancedModeTab" data-i18n="advancedMode">Advanced Mode</button>
+                </div>
+            </div>
             <div id="roundScoreInputs" class="round-score-inputs"></div>
             <div class="round-actions">
                 <button id="submitRoundBtn" class="btn btn-primary" disabled data-i18n="submitRound">Submit Round Scores</button>
@@ -56,6 +70,61 @@
                 <h2 data-i18n="winner">🎉 Winner!</h2>
                 <p id="winnerText"></p>
                 <button id="closeWinnerBtn" class="btn btn-primary" data-i18n="continuePlaying">Continue Playing</button>
+            </div>
+        </div>
+        <div id="confettiContainer" class="confetti-container hidden"></div>
+    </div>
+
+    <footer>
+        <p>Flip 7 Score Tracker • <span data-i18n="versionLabel">Version</span> <span id="footerVersion">v0.0.0</span></p>
+    </footer>
+
+    <div id="scorePreviewModal" class="modal hidden" role="dialog" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 data-i18n="previewTitle">Score Preview</h3>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="previewFormula"></p>
+                <p id="previewTotal" class="preview-total"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-close-modal data-i18n="cancel">Cancel</button>
+                <button class="btn btn-primary" id="confirmPreviewBtn" data-i18n="confirmScore">Use This Score</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editRoundModal" class="modal hidden" role="dialog" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 data-i18n="editRoundTitle">Edit Round</h3>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="editRoundForm"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-close-modal data-i18n="cancel">Cancel</button>
+                <button class="btn btn-primary" id="saveRoundEditBtn" data-i18n="saveChanges">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="rulesModal" class="modal hidden" role="dialog" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 data-i18n="rulesModalTitle">Score Rules</h3>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="rules-list" id="rulesList"></div>
+                <button class="btn btn-light" id="addRuleBtn" data-i18n="addRule">Add Rule</button>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-close-modal data-i18n="cancel">Cancel</button>
+                <button class="btn btn-primary" id="saveRulesBtn" data-i18n="saveRules">Save Rules</button>
             </div>
         </div>
     </div>

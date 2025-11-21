@@ -4,14 +4,14 @@ A lightweight, static web application for tracking scores in the Flip 7 board ga
 
 ## ✨ Features
 
-- **🎮 Round-Based Scoring**: Track points per round with automatic total calculation
-- **🏆 Win Detection**: First player to reach 200 points wins (not highest score)
-- **📊 Top Rankings**: View Top 1, 2, 3 rankings after each round based on cumulative scores
-- **🌐 Multilingual Support**: Full support for English (EN) and Vietnamese (VI) with easy language switching
-- **💾 Persistent Storage**: Game state automatically saved to browser localStorage
-- **📱 Responsive Design**: Works seamlessly on desktop and mobile devices
-- **🎨 Modern UI**: Beautiful gradient design with progress bars and visual feedback
-- **⚡ Zero Dependencies**: Pure HTML, CSS, and JavaScript—works offline
+- **🎮 Dual Scoring Modes**: Simple numeric entry or advanced expression parser (`5 10 +2 x2`) with preview modal
+- **🧊 Freeze Workflow**: Per-player confirm/unfreeze controls ensure each turn is locked before submitting
+- **📊 Ranked History**: Round table shows Top 1/2/3 per round, supports in-place editing with auto-recalculation
+- **🌐 Multilingual UI**: Toggle English ↔ Vietnamese instantly; all copy translated
+- **🧩 Rule Mapping**: Configure custom score → icon rules (defaults: `36🍀`, `18✌️`) directly in the UI
+- **🏆 Celebration Layer**: First player to hit 200 points triggers a banner + confetti animation
+- **💾 Persistent Storage**: Player order, rules, rounds, and scoring mode stored in browser localStorage
+- **📱 Responsive + Offline**: Pure HTML/CSS/JS, no build step, mobile-friendly layout
 
 ## Setup
 
@@ -35,10 +35,12 @@ This application can be hosted on any static hosting service:
 ### Starting a Game
 
 1. **Add Players**: Enter player names and click "Add Player"
-2. **Enter Round Scores**: For each round, enter the points each player earned
-3. **Submit Round**: Click "Submit Round Scores" to record the round and advance to the next round
-4. **View Progress**: The score board shows each player's total points and progress toward 200
-5. **Check History**: Review the round history table to see all previous rounds
+2. **Pick a Scoring Mode**:
+   - **Simple**: Type the final score directly
+   - **Advanced**: Enter cards/bonuses (`5 10 +2 x2`), preview, then confirm
+3. **Freeze Scores**: Use the **Confirm** button beside each player to lock their turn (unfreeze if needed)
+4. **Submit Round**: Once everyone is frozen, click "Submit Round Scores" to advance
+5. **Check History**: Review the round history table, including live Top 1/2/3 standings
 
 ### Game Rules
 
@@ -57,6 +59,19 @@ This application can be hosted on any static hosting service:
 - **Round History**: Complete history table showing scores per round and top rankings
 - **Language Switching**: Toggle between English and Vietnamese with one click
 - **Data Persistence**: Game state automatically saves to browser localStorage
+
+### Scoring Modes
+
+| Mode     | How it works | Example Input | Extras |
+|----------|--------------|---------------|--------|
+| Simple   | Enter the final numeric score and press **Confirm** to freeze the turn | `42` | Special icons appear automatically (🍀 for 36, ✌️ for 18 by default) |
+| Advanced | Enter cards and modifiers separated by spaces, click **Preview Score**, review the formula, then **Confirm** | `5 10 +2 x2` → `(5 + 10 + 2) x2 = 34` | Supports `+N` bonuses and a single multiplier `xN` applied last |
+
+### Editing & Rules
+
+- **Edit a Round**: Click any row in the history table → confirm → adjust scores in the modal → save to auto-recalculate totals and winner
+- **Rule Mapping**: Open **Rules & Settings** to customise score → icon mappings (e.g., `36 → 🍀`). Changes persist per browser.
+- **Version Tag**: Footer displays the current build version (manual bump per release).
 
 ## File Structure
 
