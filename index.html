@@ -118,9 +118,12 @@
                 <h3 data-i18n="rulesModalTitle">Score Rules</h3>
                 <button class="modal-close" data-close-modal>&times;</button>
             </div>
-            <div class="modal-body">
-                <div class="rules-list" id="rulesList"></div>
-                <button class="btn btn-light" id="addRuleBtn" data-i18n="addRule">Add Rule</button>
+            <div class="modal-body rules-modal-body">
+                <section class="rules-config">
+                    <div class="rules-list" id="rulesList"></div>
+                    <button class="btn btn-light" id="addRuleBtn" data-i18n="addRule">Add Rule</button>
+                </section>
+                <article id="officialRules" class="rules-article" aria-label="Official Flip 7 Rules"></article>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" data-close-modal data-i18n="cancel">Cancel</button>

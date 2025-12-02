@@ -74,6 +74,19 @@ This application can be hosted on any static hosting service:
 - **Rule Mapping**: Open **Rules & Settings** to customise score → icon mappings (e.g., `36 → 🍀`). Changes persist per browser.
 - **Version Tag**: Footer displays the current build version (manual bump per release).
 
+## Official Rule Summary
+
+Sourced from the Flip 7 rulebook (`25_FLIP_7_TB_RULES_C_Rev_9_2_25_ND.pdf`). [[source](https://cdn.shopify.com/s/files/1/0611/3958/3198/files/25_FLIP_7_TB_RULES_C_Rev_9_2_25_ND.pdf?v=1756935535)]
+
+- **Objective**: Race to 200 points; flipping seven unique Number cards ends the round immediately and awards +15 points.
+- **Setup**: Thoroughly shuffle the deck, deal one face-up card per player, and resolve Action cards (like Second Chance) as soon as they appear.
+- **Action Cards**: May target any active player (even yourself). Second Chance cancels the next duplicate you would draw but only one may sit in front of a player and all copies discard at round end.
+- **Modifiers**: `+2` to `+10` add straight bonuses; `x2` doubles the sum of Number cards before other modifiers apply.
+- **Round End**: Either everyone has stayed/busted or someone flips seven unique numbers.
+- **Scoring Order**: Sum Number cards → apply `x2` → add modifiers/bonuses → apply the Flip 7 bonus if earned.
+- **Next Dealer**: Discard all used cards, pass the deck to the left, and reshuffle only when the deck is exhausted.
+- **Victory**: After the round in which a player crosses 200 points, the highest total wins.
+
 ## File Structure
 
 ```

@@ -128,6 +128,68 @@ const translations = {
     }
 };
 
+const OFFICIAL_RULES = [
+    {
+        title: 'Objective',
+        paragraphs: [
+            'Be the first player to accumulate 200 points by banking unique Number cards without busting.',
+            'If you successfully Flip 7 unique Number cards in a single round, the round ends immediately for everyone and you gain a 15-point bonus.'
+        ]
+    },
+    {
+        title: 'Setup & Dealing',
+        paragraphs: [
+            'Have pen and paper handy (or use the QR-linked score tools) to track the dash to 200 points. Thoroughly shuffle the deck and choose a dealer for the round.'
+        ],
+        list: [
+            'Dealer deals one face-up card to each player, pausing immediately if an Action card appears so it can resolve before dealing continues.',
+            'Players may start the round with different numbers or types of cards depending on received Action cards.',
+            'When the deck is exhausted, reshuffle the discards but leave any cards still in front of players exactly where they are.'
+        ]
+    },
+    {
+        title: 'Action Cards',
+        paragraphs: [
+            'Action cards can target any active player, including yourself; if you are the only active player, you must target yourself. Keep Action cards above your Number cards.',
+            'Second Chance stays in front of a player until it cancels the next duplicate Number card they would bust on. Only one Second Chance may sit in front of a player at a time, and all copies are discarded at the end of the round (even if unused).'
+        ]
+    },
+    {
+        title: 'Modifier Cards',
+        paragraphs: [
+            'Modifiers are not Number cards and do not count toward flipping seven uniques. You cannot load additional cards onto a modifier.',
+            'A +2 to +10 card simply adds that amount to the final tally of your Number cards.'
+        ],
+        list: [
+            'Use the x2 card to double the sum of your Number cards before adding any other modifiers.',
+            'You may end your turn with only modifier cards and still score their value unless a x2 is waiting on zero.'
+        ]
+    },
+    {
+        title: 'End of a Round',
+        list: [
+            'All players have either busted or chosen to stay (flip cards facedown to indicate you are inactive).',
+            'A player flips seven unique Number cards, ending the round instantly.'
+        ]
+    },
+    {
+        title: 'Scoring Order',
+        list: [
+            'Add together the values of all Number cards you kept.',
+            'Apply the x2 multiplier if present.',
+            'Add any modifier bonuses (+2 to +10, etc.).',
+            'Add the 15-point Flip 7 bonus if you achieved it this round.'
+        ]
+    },
+    {
+        title: 'Next Round & Victory',
+        paragraphs: [
+            'After scoring, move all cards from in front of players to a face-up discard pile, pass the remaining deck to the left, and the next player becomes the dealer.',
+            'At the end of the round in which one or more players reach 200, the highest total wins the game.'
+        ]
+    }
+];
+
 class Flip7Tracker {
     constructor() {
         this.currentLang = this.loadLanguage();
@@ -146,6 +208,7 @@ class Flip7Tracker {
         this.handleRowDragEnd = this.handleRowDragEnd.bind(this);
         this.pendingPreview = null;
         this.editingRoundIndex = null;
+        this.fireworkTimer = null;
         this.init();
     }
 
@@ -664,19 +727,49 @@ class Flip7Tracker {
         const container = document.getElementById('confettiContainer');
         if (!container) return;
         container.classList.remove('hidden');
-        for (let i = 0; i < 40; i += 1) {
-            const piece = document.createElement('div');
-            piece.className = 'confetti-piece';
-            piece.style.left = `${Math.random() * 100}%`;
-            piece.style.backgroundColor = CONFETTI_COLOURS[i % CONFETTI_COLOURS.length];
-            piece.style.animationDelay = `${Math.random()}s`;
-            container.appendChild(piece);
-            setTimeout(() => piece.remove(), 3000);
+        if (this.fireworkTimer) {
+            return;
         }
+        this.spawnFirework(container);
+        this.fireworkTimer = setInterval(() => {
+            this.spawnFirework(container);
+        }, 700);
+    }
+
+    spawnFirework(container) {
+        const firework = document.createElement('div');
+        firework.className = 'firework';
+        firework.style.left = `${10 + Math.random() * 80}%`;
+        firework.style.top = `${20 + Math.random() * 50}%`;
+
+        const particleCount = 10;
+        for (let i = 0; i < particleCount; i += 1) {
+            const particle = document.createElement('span');
+            const angle = (Math.PI * 2 * i) / particleCount;
+            const distance = 80 + Math.random() * 60;
+            particle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+            particle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+            particle.style.backgroundColor = CONFETTI_COLOURS[i % CONFETTI_COLOURS.length];
+            particle.style.animationDelay = `${Math.random() * 0.2}s`;
+            firework.appendChild(particle);
+        }
+
+        container.appendChild(firework);
         setTimeout(() => {
+            firework.remove();
+        }, 1800);
+    }
+
+    stopConfetti() {
+        const container = document.getElementById('confettiContainer');
+        if (this.fireworkTimer) {
+            clearInterval(this.fireworkTimer);
+            this.fireworkTimer = null;
+        }
+        if (container) {
             container.classList.add('hidden');
             container.innerHTML = '';
-        }, 3500);
+        }
     }
 
     getLatestRoundScore(playerId) {
@@ -849,6 +942,7 @@ class Flip7Tracker {
 
     openRulesModal() {
         this.renderRulesList();
+        this.renderOfficialRules();
         this.openModal('rulesModal');
     }
 
@@ -870,6 +964,20 @@ class Flip7Tracker {
     addRuleRow() {
         this.scoreRules.push({ id: `rule-${Date.now()}`, score: 0, icon: '⭐', label: '' });
         this.renderRulesList();
+    }
+
+    renderOfficialRules() {
+        const container = document.getElementById('officialRules');
+        if (!container) return;
+        container.innerHTML = OFFICIAL_RULES.map(section => {
+            const paragraphs = (section.paragraphs || [])
+                .map(text => `<p>${text}</p>`)
+                .join('');
+            const list = section.list
+                ? `<ul>${section.list.map(item => `<li>${item}</li>`).join('')}</ul>`
+                : '';
+            return `<section><h4>${section.title}</h4>${paragraphs}${list}</section>`;
+        }).join('');
     }
 
     saveRules() {
@@ -924,9 +1032,7 @@ class Flip7Tracker {
 
     closeWinnerBanner() {
         document.getElementById('winnerBanner').classList.add('hidden');
-        const confetti = document.getElementById('confettiContainer');
-        confetti.classList.add('hidden');
-        confetti.innerHTML = '';
+        this.stopConfetti();
     }
 
     updateRoundNumber() {
