@@ -128,6 +128,66 @@ const translations = {
     }
 };
 
+// Flip 7 deck + scoring configuration (for advanced input mode)
+const FLIP7_CARD_DEFINITIONS = {
+    numberCards: [
+        { id: 'num-0', label: '0', value: 0, count: 1 },
+        { id: 'num-1', label: '1', value: 1, count: 1 },
+        { id: 'num-2', label: '2', value: 2, count: 2 },
+        { id: 'num-3', label: '3', value: 3, count: 3 },
+        { id: 'num-4', label: '4', value: 4, count: 4 },
+        { id: 'num-5', label: '5', value: 5, count: 5 },
+        { id: 'num-6', label: '6', value: 6, count: 6 },
+        { id: 'num-7', label: '7', value: 7, count: 7 },
+        { id: 'num-8', label: '8', value: 8, count: 8 },
+        { id: 'num-9', label: '9', value: 9, count: 9 },
+        { id: 'num-10', label: '10', value: 10, count: 10 },
+        { id: 'num-11', label: '11', value: 11, count: 11 },
+        { id: 'num-12', label: '12', value: 12, count: 12 }
+    ],
+    actionCards: [
+        { id: 'freeze', label: 'Freeze', count: 3 },
+        { id: 'second-chance', label: 'Second Chance', count: 3 },
+        { id: 'flip-three', label: 'Flip Three', count: 3 }
+    ],
+    modifierCards: [
+        { id: 'x2', label: 'x2', count: 1 },
+        { id: 'plus-2', label: '+2', value: 2, count: 1 },
+        { id: 'plus-4', label: '+4', value: 4, count: 1 },
+        { id: 'plus-6', label: '+6', value: 6, count: 1 },
+        { id: 'plus-8', label: '+8', value: 8, count: 1 },
+        { id: 'plus-10', label: '+10', value: 10, count: 1 }
+    ]
+};
+
+function buildInitialDeckState() {
+    const deck = {};
+    FLIP7_CARD_DEFINITIONS.numberCards.forEach(card => {
+        deck[card.id] = card.count;
+    });
+    FLIP7_CARD_DEFINITIONS.actionCards.forEach(card => {
+        deck[card.id] = card.count;
+    });
+    FLIP7_CARD_DEFINITIONS.modifierCards.forEach(card => {
+        deck[card.id] = card.count;
+    });
+    return deck;
+}
+
+function buildEmptyCardCounts() {
+    const counts = {};
+    FLIP7_CARD_DEFINITIONS.numberCards.forEach(card => {
+        counts[card.id] = 0;
+    });
+    FLIP7_CARD_DEFINITIONS.actionCards.forEach(card => {
+        counts[card.id] = 0;
+    });
+    FLIP7_CARD_DEFINITIONS.modifierCards.forEach(card => {
+        counts[card.id] = 0;
+    });
+    return counts;
+}
+
 const OFFICIAL_RULES = [
     {
         title: 'Objective',
@@ -192,6 +252,7 @@ const OFFICIAL_RULES = [
 
 class Flip7Tracker {
     constructor() {
+        this.currentTheme = this.loadTheme();
         this.currentLang = this.loadLanguage();
         const saved = this.loadGameState();
         this.players = saved?.players || [];
@@ -200,6 +261,8 @@ class Flip7Tracker {
         this.gameWinner = saved?.gameWinner || null;
         this.scoringMode = saved?.scoringMode || 'simple';
         this.scoreRules = Array.isArray(saved?.scoreRules) && saved.scoreRules.length ? saved.scoreRules : [...DEFAULT_RULES];
+        // Deck state (for advanced mode card/probability tracking)
+        this.deckState = saved?.deckState || buildInitialDeckState();
         this.roundDraft = {};
         this.draggingPlayerId = null;
         this.handleRowDragStart = this.handleRowDragStart.bind(this);
@@ -213,6 +276,7 @@ class Flip7Tracker {
     }
 
     init() {
+        this.applyTheme();
         this.setVersionText();
         this.updateLanguage();
         this.resetRoundDraft();
@@ -244,6 +308,10 @@ class Flip7Tracker {
         document.getElementById('resetGameBtn').addEventListener('click', () => this.resetGame());
         document.getElementById('closeWinnerBtn').addEventListener('click', () => this.closeWinnerBanner());
         document.getElementById('langBtn').addEventListener('click', () => this.toggleLanguage());
+        const themeToggle = document.getElementById('themeToggleBtn');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => this.toggleTheme());
+        }
         document.getElementById('rulesBtn').addEventListener('click', () => this.openRulesModal());
         document.getElementById('addRuleBtn').addEventListener('click', () => this.addRuleRow());
         document.getElementById('saveRulesBtn').addEventListener('click', () => this.saveRules());
@@ -286,6 +354,12 @@ class Flip7Tracker {
             const row = event.target.closest('.score-input-row');
             if (!row) return;
             const playerId = row.dataset.playerId;
+            if (event.target.classList.contains('card-btn') || event.target.closest('.card-btn')) {
+                const btn = event.target.closest('.card-btn');
+                const cardId = btn.dataset.cardId;
+                this.handleCardClick(playerId, cardId);
+                return;
+            }
             if (event.target.classList.contains('confirm-btn')) {
                 this.handleConfirmScore(playerId);
                 return;
@@ -340,7 +414,8 @@ class Flip7Tracker {
                 score: null,
                 expression: '',
                 formula: '',
-                frozen: false
+                frozen: false,
+                cardCounts: buildEmptyCardCounts()
             };
         });
         this.updateSubmitState();
@@ -353,7 +428,8 @@ class Flip7Tracker {
                 score: null,
                 expression: '',
                 formula: '',
-                frozen: false
+                frozen: false,
+                cardCounts: buildEmptyCardCounts()
             };
         }
         return this.roundDraft[playerId];
@@ -449,6 +525,9 @@ class Flip7Tracker {
         const container = document.getElementById('roundScoreInputs');
         if (!this.players.length) {
             container.innerHTML = `<div class="empty-state"><p>${this.t('addPlayersToEnter')}</p></div>`;
+            if (document.getElementById('deckSummary')) {
+                document.getElementById('deckSummary').innerHTML = '';
+            }
             return;
         }
 
@@ -466,14 +545,12 @@ class Flip7Tracker {
                 : '';
             const inputId = this.scoringMode === 'simple'
                 ? `score-${player.id}`
-                : `expression-${player.id}`;
+                : `cards-${player.id}`;
             const inputArea = this.scoringMode === 'simple'
-                ? `<input type="number" class="simple-score" id="${inputId}" min="0" step="1" value="${entry.frozen && entry.score !== null ? entry.score : (entry.pendingScore ?? 0)}" ${entry.frozen ? 'disabled' : ''}>`
-                : `<textarea class="advanced-input" id="${inputId}" placeholder="${this.t('enterExpressionPlaceholder')}" ${entry.frozen ? 'disabled' : ''}>${entry.expression || ''}</textarea>`;
+                ? `<input type="number" class="simple-score" id="${inputId}" min="0" step="1" placeholder="0" value="${entry.frozen && entry.score !== null ? entry.score : (entry.pendingScore ?? '')}" ${entry.frozen ? 'disabled' : ''}>`
+                : this.renderAdvancedCardControls(player.id, entry, inputId);
 
-            const previewButton = this.scoringMode === 'advanced'
-                ? `<button class="btn btn-secondary btn-small preview-btn" data-player-id="${player.id}" ${entry.frozen ? 'disabled' : ''}>${this.t('previewButton')}</button>`
-                : '';
+            const previewButton = '';
 
             const confirmButton = entry.frozen
                 ? `<button class="btn btn-light btn-small unfreeze-btn" data-player-id="${player.id}">${this.t('unfreeze')}</button>`
@@ -501,6 +578,7 @@ class Flip7Tracker {
 
         this.updateSubmitState();
         this.enableRoundDragAndDrop();
+        this.renderDeckSummary();
     }
 
     enableRoundDragAndDrop() {
@@ -579,6 +657,11 @@ class Flip7Tracker {
         const entry = this.ensureDraftEntry(playerId);
         entry.frozen = false;
         entry.score = null;
+        if (this.scoringMode === 'advanced') {
+            entry.pendingScore = null;
+            entry.formula = '';
+            entry.cardCounts = buildEmptyCardCounts();
+        }
         this.renderRoundInputs();
         this.updateSubmitState();
     }
@@ -690,6 +773,8 @@ class Flip7Tracker {
             roundScores[player.id] = entry.score;
             player.totalPoints += entry.score;
         });
+        // Update deck based on all cards used this round (advanced mode)
+        this.updateDeckAfterRound();
         this.roundHistory.push({
             round: this.currentRound,
             scores: roundScores
@@ -1059,7 +1144,8 @@ class Flip7Tracker {
             roundHistory: this.roundHistory,
             gameWinner: this.gameWinner,
             scoringMode: this.scoringMode,
-            scoreRules: this.scoreRules
+            scoreRules: this.scoreRules,
+            deckState: this.deckState
         };
         localStorage.setItem('flip7GameState', JSON.stringify(state));
     }
@@ -1111,12 +1197,322 @@ class Flip7Tracker {
         return translations[this.currentLang][key] || key;
     }
 
+    toggleTheme() {
+        this.currentTheme = this.currentTheme === 'dark' ? 'light' : 'dark';
+        this.applyTheme();
+        this.saveTheme();
+    }
+
+    applyTheme() {
+        const root = document.documentElement;
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = this.currentTheme || (prefersDark ? 'dark' : 'light');
+        root.setAttribute('data-theme', theme);
+    }
+
+    saveTheme() {
+        try {
+            localStorage.setItem('flip7Theme', this.currentTheme);
+        } catch (_err) {
+            // ignore storage errors
+        }
+    }
+
+    loadTheme() {
+        try {
+            return localStorage.getItem('flip7Theme') || null;
+        } catch (_err) {
+            return null;
+        }
+    }
+
     escapeHtml(value) {
         const div = document.createElement('div');
         div.textContent = value;
         return div.innerHTML;
     }
 }
+
+// Advanced mode helpers: card rendering, scoring, deck + probability tracking
+Flip7Tracker.prototype.renderAdvancedCardControls = function renderAdvancedCardControls(playerId, entry, inputId) {
+    const cardCounts = entry.cardCounts || buildEmptyCardCounts();
+    const numberButtons = FLIP7_CARD_DEFINITIONS.numberCards.map(card => {
+        const count = cardCounts[card.id] || 0;
+        return `
+            <button 
+                type="button" 
+                class="card-btn" 
+                data-player-id="${playerId}" 
+                data-card-id="${card.id}"
+                id="${inputId}-${card.id}"
+            >
+                <span class="card-label">${card.label}</span>
+                <span class="card-count">x${count}</span>
+            </button>
+        `;
+    }).join('');
+
+    const modifierButtons = FLIP7_CARD_DEFINITIONS.modifierCards.map(card => {
+        const count = cardCounts[card.id] || 0;
+        return `
+            <button 
+                type="button" 
+                class="card-btn card-btn-modifier" 
+                data-player-id="${playerId}" 
+                data-card-id="${card.id}"
+            >
+                <span class="card-label">${card.label}</span>
+                <span class="card-count">x${count}</span>
+            </button>
+        `;
+    }).join('');
+
+    const actionButtons = FLIP7_CARD_DEFINITIONS.actionCards.map(card => {
+        const count = cardCounts[card.id] || 0;
+        return `
+            <button 
+                type="button" 
+                class="card-btn card-btn-action" 
+                data-player-id="${playerId}" 
+                data-card-id="${card.id}"
+            >
+                <span class="card-label">${card.label}</span>
+                <span class="card-count">x${count}</span>
+            </button>
+        `;
+    }).join('');
+
+    const formulaLine = entry.formula
+        ? `<div class="advanced-formula">${entry.formula}</div>`
+        : '';
+
+    return `
+        <div class="advanced-input" id="${inputId}">
+            <div class="card-group">
+                <div class="card-group-title">0 – 12</div>
+                <div class="card-grid">
+                    ${numberButtons}
+                </div>
+            </div>
+            <div class="card-group">
+                <div class="card-group-title">x2 &amp; +</div>
+                <div class="card-grid">
+                    ${modifierButtons}
+                </div>
+            </div>
+            <div class="card-group">
+                <div class="card-group-title">Actions</div>
+                <div class="card-grid">
+                    ${actionButtons}
+                </div>
+            </div>
+            ${formulaLine}
+        </div>
+    `;
+};
+
+Flip7Tracker.prototype.handleCardClick = function handleCardClick(playerId, cardId) {
+    const entry = this.ensureDraftEntry(playerId);
+    if (!entry.cardCounts) {
+        entry.cardCounts = buildEmptyCardCounts();
+    }
+    const counts = entry.cardCounts;
+    counts[cardId] = (counts[cardId] || 0) + 1;
+
+    const result = this.calculateCardScoreFromCounts(counts);
+    entry.pendingScore = result.total;
+    entry.formula = result.formula;
+    entry.expression = '';
+    entry.score = null;
+    entry.frozen = false;
+
+    this.renderRoundInputs();
+    this.updateSubmitState();
+};
+
+Flip7Tracker.prototype.calculateCardScoreFromCounts = function calculateCardScoreFromCounts(cardCounts) {
+    const numberValues = [];
+    let hasDuplicate = false;
+
+    FLIP7_CARD_DEFINITIONS.numberCards.forEach(card => {
+        const count = cardCounts[card.id] || 0;
+        if (count > 1) {
+            hasDuplicate = true;
+        }
+        for (let i = 0; i < count; i += 1) {
+            numberValues.push(card.value);
+        }
+    });
+
+    if (hasDuplicate && numberValues.length > 0) {
+        return {
+            total: 0,
+            formula: 'Duplicate number cards → 0 points'
+        };
+    }
+
+    const baseSum = numberValues.reduce((acc, v) => acc + v, 0);
+    let total = baseSum;
+    const parts = [];
+
+    if (numberValues.length) {
+        parts.push(numberValues.join(' + '));
+    }
+
+    // x2 multiplier (only one exists in the deck, but support >1 clicks gracefully)
+    const x2Count = cardCounts['x2'] || 0;
+    if (x2Count > 0 && baseSum > 0) {
+        total *= 2;
+        if (parts.length) {
+            parts[0] = `(${parts[0]}) ×2`;
+        } else {
+            parts.push('0 ×2');
+        }
+    }
+
+    // Modifier bonuses (+2, +4, +6, +8, +10)
+    const modifierLabels = [];
+    FLIP7_CARD_DEFINITIONS.modifierCards.forEach(card => {
+        if (card.id === 'x2') return;
+        const count = cardCounts[card.id] || 0;
+        if (count > 0) {
+            const bonus = (card.value || 0) * count;
+            total += bonus;
+            for (let i = 0; i < count; i += 1) {
+                modifierLabels.push(card.label);
+            }
+        }
+    });
+    if (modifierLabels.length) {
+        parts.push(modifierLabels.join(' + '));
+    }
+
+    // Flip 7 bonus: exactly 7 unique number cards (no duplicates already ensured)
+    let flip7Bonus = 0;
+    if (numberValues.length === 7) {
+        flip7Bonus = 15;
+        parts.push('+15 Flip 7');
+        total += 15;
+    }
+
+    const formula = parts.length ? `${parts.join(' + ')} = ${total}` : `${total}`;
+
+    return {
+        total,
+        formula,
+        baseSum,
+        hasDuplicate,
+        flip7Bonus
+    };
+};
+
+Flip7Tracker.prototype.getCardsUsedThisRound = function getCardsUsedThisRound() {
+    const used = {};
+    Object.values(this.roundDraft || {}).forEach(entry => {
+        if (!entry || !entry.cardCounts) return;
+        Object.entries(entry.cardCounts).forEach(([cardId, count]) => {
+            if (!count) return;
+            used[cardId] = (used[cardId] || 0) + count;
+        });
+    });
+    return used;
+};
+
+Flip7Tracker.prototype.updateDeckAfterRound = function updateDeckAfterRound() {
+    const used = this.getCardsUsedThisRound();
+    Object.entries(used).forEach(([cardId, count]) => {
+        const current = this.deckState[cardId] || 0;
+        this.deckState[cardId] = Math.max(0, current - count);
+    });
+    const totalLeft = Object.values(this.deckState).reduce((acc, v) => acc + v, 0);
+    if (totalLeft <= 0) {
+        this.deckState = buildInitialDeckState();
+    }
+};
+
+Flip7Tracker.prototype.getProvisionalDeck = function getProvisionalDeck() {
+    const provisional = { ...this.deckState };
+    const used = this.getCardsUsedThisRound();
+    Object.entries(used).forEach(([cardId, count]) => {
+        provisional[cardId] = Math.max(0, (provisional[cardId] || 0) - count);
+    });
+    return provisional;
+};
+
+Flip7Tracker.prototype.renderDeckSummary = function renderDeckSummary() {
+    const container = document.getElementById('deckSummary');
+    if (!container) return;
+    if (this.scoringMode !== 'advanced') {
+        container.innerHTML = '';
+        return;
+    }
+
+    const deck = this.getProvisionalDeck();
+    const total = Object.values(deck).reduce((acc, v) => acc + v, 0);
+    if (total === 0) {
+        container.innerHTML = '<div class="deck-empty">Deck empty – will reset on next round.</div>';
+        return;
+    }
+
+    const rows = [];
+    FLIP7_CARD_DEFINITIONS.numberCards.forEach(card => {
+        const remaining = deck[card.id] || 0;
+        if (remaining <= 0) return;
+        const probability = ((remaining / total) * 100).toFixed(1);
+        rows.push(`
+            <tr>
+                <td>${card.label}</td>
+                <td>${remaining}</td>
+                <td>${probability}%</td>
+            </tr>
+        `);
+    });
+    FLIP7_CARD_DEFINITIONS.modifierCards.forEach(card => {
+        const remaining = deck[card.id] || 0;
+        if (remaining <= 0) return;
+        const probability = ((remaining / total) * 100).toFixed(1);
+        rows.push(`
+            <tr>
+                <td>${card.label}</td>
+                <td>${remaining}</td>
+                <td>${probability}%</td>
+            </tr>
+        `);
+    });
+    FLIP7_CARD_DEFINITIONS.actionCards.forEach(card => {
+        const remaining = deck[card.id] || 0;
+        if (remaining <= 0) return;
+        const probability = ((remaining / total) * 100).toFixed(1);
+        rows.push(`
+            <tr>
+                <td>${card.label}</td>
+                <td>${remaining}</td>
+                <td>${probability}%</td>
+            </tr>
+        `);
+    });
+
+    container.innerHTML = `
+        <div class="deck-summary-inner">
+            <div class="deck-summary-header">
+                <span>Deck &amp; probabilities</span>
+                <span class="deck-total">Total: ${total} cards</span>
+            </div>
+            <table class="deck-table">
+                <thead>
+                    <tr>
+                        <th>Card</th>
+                        <th>Remaining</th>
+                        <th>Chance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows.join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+};
 
 let tracker;
 document.addEventListener('DOMContentLoaded', () => {
