@@ -413,6 +413,15 @@ section h2 {
     border-top: 1px solid var(--border-color);
 }
 
+.score-input-row-advanced.collapsed {
+    padding-bottom: clamp(12px, 2.5vh, 18px);
+}
+
+.score-input-row-advanced.collapsed .score-actions {
+    margin-top: clamp(8px, 1.5vh, 12px);
+    padding-top: clamp(8px, 1.5vh, 12px);
+}
+
 .score-input-row-simple .score-actions {
     flex: 0 0 auto;
     align-self: flex-start;
@@ -422,6 +431,38 @@ section h2 {
     display: flex;
     align-items: center;
     gap: 12px;
+    width: 100%;
+}
+
+.expand-toggle-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    min-width: 32px;
+    height: 32px;
+}
+
+.expand-toggle-btn:hover {
+    background: rgba(148, 163, 184, 0.12);
+    color: var(--text-primary);
+}
+
+.expand-icon {
+    font-size: 0.9rem;
+    transition: transform var(--transition-fast);
+    display: inline-block;
+}
+
+.score-input-row.collapsed .expand-icon {
+    transform: rotate(-90deg);
 }
 
 .drag-handle {
@@ -468,6 +509,32 @@ section h2 {
     display: flex;
     flex-direction: column;
     gap: clamp(8px, 1.5vh, 12px);
+    width: 100%;
+}
+
+.card-selection-container {
+    width: 100%;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
+    max-height: 2000px;
+    opacity: 1;
+}
+
+.card-selection-container.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.score-input-row-advanced.collapsed .card-selection-container {
+    display: none;
+}
+
+.score-input-row-advanced.collapsed .selected-cards-container,
+.score-input-row-advanced.collapsed .advanced-formula {
+    margin-top: clamp(8px, 1.5vh, 12px);
 }
 
 .score-input-row-advanced .advanced-input {
@@ -637,12 +704,24 @@ section h2 {
     border: 1px solid var(--border-color);
     text-align: center;
     width: 100%;
+    order: 2;
+}
+
+.score-input-row-advanced.collapsed .advanced-formula {
+    order: 1;
+    margin-top: clamp(8px, 1.5vh, 12px);
 }
 
 .selected-cards-container {
     margin-top: clamp(12px, 2vh, 16px);
     margin-bottom: clamp(8px, 1.5vh, 12px);
     width: 100%;
+    order: 1;
+}
+
+.score-input-row-advanced.collapsed .selected-cards-container {
+    margin-top: clamp(8px, 1.5vh, 12px);
+    order: 0;
 }
 
 .selected-cards-bubbles {
@@ -1470,6 +1549,11 @@ footer {
 
     .card-group {
         margin-bottom: clamp(8px, 1.5vh, 12px);
+    }
+
+    .expand-toggle-btn {
+        min-width: 36px;
+        height: 36px;
     }
 }
 

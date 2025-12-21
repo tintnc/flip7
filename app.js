@@ -264,6 +264,13 @@ class Flip7Tracker {
         // Deck state (for advanced mode card/probability tracking)
         this.deckState = saved?.deckState || buildInitialDeckState();
         this.deckSummaryVisible = saved?.deckSummaryVisible !== undefined ? saved.deckSummaryVisible : false;
+        this.playerExpandedStates = saved?.playerExpandedStates || {};
+        // Initialize expanded states: first player expanded, others collapsed
+        this.players.forEach((player, index) => {
+            if (this.playerExpandedStates[player.id] === undefined) {
+                this.playerExpandedStates[player.id] = index === 0;
+            }
+        });
         this.roundDraft = {};
         this.draggingPlayerId = null;
         this.handleRowDragStart = this.handleRowDragStart.bind(this);
@@ -400,6 +407,11 @@ class Flip7Tracker {
             if (event.target.id === 'toggleDeckSummary' || event.target.closest('#toggleDeckSummary')) {
                 this.toggleDeckSummary();
             }
+            if (event.target.classList.contains('expand-toggle-btn') || event.target.closest('.expand-toggle-btn')) {
+                const btn = event.target.closest('.expand-toggle-btn');
+                const playerId = btn.dataset.playerId;
+                this.togglePlayerExpanded(playerId);
+            }
         });
     }
 
@@ -458,7 +470,10 @@ class Flip7Tracker {
             alert(this.t('playerExists'));
             return;
         }
-        this.players.push({ id: Date.now().toString(), name, totalPoints: 0 });
+        const newPlayerId = Date.now().toString();
+        this.players.push({ id: newPlayerId, name, totalPoints: 0 });
+        // Initialize expanded state for new player (collapsed if not first player)
+        this.playerExpandedStates[newPlayerId] = this.players.length === 1;
         input.value = '';
         this.resetRoundDraft(true);
         this.renderPlayers();
@@ -571,11 +586,20 @@ class Flip7Tracker {
                 : `<button class="btn btn-primary btn-small confirm-btn" data-player-id="${player.id}" ${this.scoringMode === 'advanced' && entry.pendingScore === null ? 'disabled' : ''}>${this.t('confirmButton')}</button>`;
 
             const modeClass = this.scoringMode === 'simple' ? 'score-input-row-simple' : 'score-input-row-advanced';
+            const isExpanded = this.scoringMode === 'advanced' 
+                ? (this.playerExpandedStates[player.id] === true) 
+                : true;
+            const expandToggle = this.scoringMode === 'advanced'
+                ? `<button class="expand-toggle-btn" data-player-id="${player.id}" aria-label="${isExpanded ? 'Collapse' : 'Expand'}" title="${isExpanded ? 'Collapse' : 'Expand'}">
+                    <span class="expand-icon">${isExpanded ? '▼' : '▶'}</span>
+                   </button>`
+                : '';
             return `
-                <div class="score-input-row ${modeClass}" data-player-id="${player.id}">
+                <div class="score-input-row ${modeClass} ${this.scoringMode === 'advanced' && !isExpanded ? 'collapsed' : ''}" data-player-id="${player.id}">
                     <div class="row-header">
                         <span class="drag-handle" role="button" aria-label="${this.t('dragHandleLabel')}" title="${this.t('dragHandleLabel')}">⋮⋮</span>
                         <label for="${inputId}">${this.escapeHtml(player.name)}${labelIcon}</label>
+                        ${expandToggle}
                     </div>
                     ${inputArea}
                     <div class="score-actions">
@@ -1172,7 +1196,8 @@ class Flip7Tracker {
             scoringMode: this.scoringMode,
             scoreRules: this.scoreRules,
             deckState: this.deckState,
-            deckSummaryVisible: this.deckSummaryVisible
+            deckSummaryVisible: this.deckSummaryVisible,
+            playerExpandedStates: this.playerExpandedStates
         };
         localStorage.setItem('flip7GameState', JSON.stringify(state));
     }
@@ -1263,6 +1288,8 @@ class Flip7Tracker {
 // Advanced mode helpers: card rendering, scoring, deck + probability tracking
 Flip7Tracker.prototype.renderAdvancedCardControls = function renderAdvancedCardControls(playerId, entry, inputId) {
     const cardCounts = entry.cardCounts || buildEmptyCardCounts();
+    const isExpanded = this.playerExpandedStates[playerId] === true;
+    
     const numberButtons = FLIP7_CARD_DEFINITIONS.numberCards.map(card => {
         const count = cardCounts[card.id] || 0;
         const selectedClass = count > 0 ? ' card-btn-selected' : '';
@@ -1319,22 +1346,24 @@ Flip7Tracker.prototype.renderAdvancedCardControls = function renderAdvancedCardC
 
     return `
         <div class="advanced-input" id="${inputId}">
-            <div class="card-group">
-                <div class="card-group-title">0 – 12</div>
-                <div class="card-grid">
-                    ${numberButtons}
+            <div class="card-selection-container ${isExpanded ? 'expanded' : 'collapsed'}">
+                <div class="card-group">
+                    <div class="card-group-title">0 – 12</div>
+                    <div class="card-grid">
+                        ${numberButtons}
+                    </div>
                 </div>
-            </div>
-            <div class="card-group">
-                <div class="card-group-title">x2 &amp; +</div>
-                <div class="card-grid">
-                    ${modifierButtons}
+                <div class="card-group">
+                    <div class="card-group-title">x2 &amp; +</div>
+                    <div class="card-grid">
+                        ${modifierButtons}
+                    </div>
                 </div>
-            </div>
-            <div class="card-group">
-                <div class="card-group-title">Actions</div>
-                <div class="card-grid card-grid-actions">
-                    ${actionButtons}
+                <div class="card-group">
+                    <div class="card-group-title">Actions</div>
+                    <div class="card-grid card-grid-actions">
+                        ${actionButtons}
+                    </div>
                 </div>
             </div>
             ${selectedCardsBubbles}
@@ -1350,6 +1379,11 @@ Flip7Tracker.prototype.handleCardClick = function handleCardClick(playerId, card
     }
     const counts = entry.cardCounts;
     counts[cardId] = (counts[cardId] || 0) + 1;
+
+    // Auto-expand if collapsed
+    if (this.playerExpandedStates[playerId] === false) {
+        this.playerExpandedStates[playerId] = true;
+    }
 
     const result = this.calculateCardScoreFromCounts(counts);
     entry.pendingScore = result.total;
@@ -1543,6 +1577,12 @@ Flip7Tracker.prototype.getProvisionalDeck = function getProvisionalDeck() {
 Flip7Tracker.prototype.toggleDeckSummary = function toggleDeckSummary() {
     this.deckSummaryVisible = !this.deckSummaryVisible;
     this.renderDeckSummary();
+    this.saveGameState();
+};
+
+Flip7Tracker.prototype.togglePlayerExpanded = function togglePlayerExpanded(playerId) {
+    this.playerExpandedStates[playerId] = !(this.playerExpandedStates[playerId] !== false);
+    this.renderRoundInputs();
     this.saveGameState();
 };
 
