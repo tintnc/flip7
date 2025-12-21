@@ -1,4 +1,4 @@
-const APP_VERSION = 'v0.2.0';
+const APP_VERSION = 'v0.3.0';
 const DEFAULT_RULES = [
     { id: 'rule-36', score: 36, icon: '🍀', label: 'Lucky 36' },
     { id: 'rule-18', score: 18, icon: '✌️', label: 'Calm 18' }
@@ -263,6 +263,7 @@ class Flip7Tracker {
         this.scoreRules = Array.isArray(saved?.scoreRules) && saved.scoreRules.length ? saved.scoreRules : [...DEFAULT_RULES];
         // Deck state (for advanced mode card/probability tracking)
         this.deckState = saved?.deckState || buildInitialDeckState();
+        this.deckSummaryVisible = saved?.deckSummaryVisible !== undefined ? saved.deckSummaryVisible : false;
         this.roundDraft = {};
         this.draggingPlayerId = null;
         this.handleRowDragStart = this.handleRowDragStart.bind(this);
@@ -354,6 +355,12 @@ class Flip7Tracker {
             const row = event.target.closest('.score-input-row');
             if (!row) return;
             const playerId = row.dataset.playerId;
+            if (event.target.classList.contains('bubble-remove-btn') || event.target.closest('.bubble-remove-btn')) {
+                const btn = event.target.closest('.bubble-remove-btn');
+                const cardId = btn.dataset.cardId;
+                this.handleRemoveCard(playerId, cardId);
+                return;
+            }
             if (event.target.classList.contains('card-btn') || event.target.closest('.card-btn')) {
                 const btn = event.target.closest('.card-btn');
                 const cardId = btn.dataset.cardId;
@@ -387,6 +394,11 @@ class Flip7Tracker {
                     this.scoreRules = [...DEFAULT_RULES];
                 }
                 this.renderRulesList();
+            }
+        });
+        document.addEventListener('click', (event) => {
+            if (event.target.id === 'toggleDeckSummary' || event.target.closest('#toggleDeckSummary')) {
+                this.toggleDeckSummary();
             }
         });
     }
@@ -499,6 +511,8 @@ class Flip7Tracker {
         this.currentRound = 1;
         this.roundHistory = [];
         this.gameWinner = null;
+        // Reset deck state when restarting the game
+        this.deckState = buildInitialDeckState();
         this.resetRoundDraft();
         this.renderRoundInputs();
         this.renderScoreBoard();
@@ -547,7 +561,7 @@ class Flip7Tracker {
                 ? `score-${player.id}`
                 : `cards-${player.id}`;
             const inputArea = this.scoringMode === 'simple'
-                ? `<input type="number" class="simple-score" id="${inputId}" min="0" step="1" placeholder="0" value="${entry.frozen && entry.score !== null ? entry.score : (entry.pendingScore ?? '')}" ${entry.frozen ? 'disabled' : ''}>`
+                ? `<input type="number" class="simple-score" id="${inputId}" min="0" step="1" placeholder="0" inputmode="numeric" pattern="[0-9]*" value="${entry.frozen && entry.score !== null ? entry.score : (entry.pendingScore ?? '')}" ${entry.frozen ? 'disabled' : ''}>`
                 : this.renderAdvancedCardControls(player.id, entry, inputId);
 
             const previewButton = '';
@@ -556,8 +570,9 @@ class Flip7Tracker {
                 ? `<button class="btn btn-light btn-small unfreeze-btn" data-player-id="${player.id}">${this.t('unfreeze')}</button>`
                 : `<button class="btn btn-primary btn-small confirm-btn" data-player-id="${player.id}" ${this.scoringMode === 'advanced' && entry.pendingScore === null ? 'disabled' : ''}>${this.t('confirmButton')}</button>`;
 
+            const modeClass = this.scoringMode === 'simple' ? 'score-input-row-simple' : 'score-input-row-advanced';
             return `
-                <div class="score-input-row" data-player-id="${player.id}">
+                <div class="score-input-row ${modeClass}" data-player-id="${player.id}">
                     <div class="row-header">
                         <span class="drag-handle" role="button" aria-label="${this.t('dragHandleLabel')}" title="${this.t('dragHandleLabel')}">⋮⋮</span>
                         <label for="${inputId}">${this.escapeHtml(player.name)}${labelIcon}</label>
@@ -636,7 +651,9 @@ class Flip7Tracker {
         const entry = this.ensureDraftEntry(playerId);
         if (this.scoringMode === 'simple') {
             const input = document.getElementById(`score-${playerId}`);
-            const value = parseFloat(input?.value ?? '');
+            const inputValue = input?.value?.trim() ?? '';
+            // If input is empty, default to 0 (matching placeholder)
+            const value = inputValue === '' ? 0 : parseFloat(inputValue);
             if (Number.isNaN(value) || value < 0) {
                 alert(this.t('invalidScore'));
                 return;
@@ -815,34 +832,43 @@ class Flip7Tracker {
         if (this.fireworkTimer) {
             return;
         }
-        this.spawnFirework(container);
+        // Spawn multiple fireworks initially for immediate effect
+        for (let i = 0; i < 3; i += 1) {
+            setTimeout(() => {
+                this.spawnFirework(container);
+            }, i * 200);
+        }
+        // Continue spawning fireworks continuously
         this.fireworkTimer = setInterval(() => {
             this.spawnFirework(container);
-        }, 700);
+        }, 500);
     }
 
     spawnFirework(container) {
         const firework = document.createElement('div');
         firework.className = 'firework';
-        firework.style.left = `${10 + Math.random() * 80}%`;
-        firework.style.top = `${20 + Math.random() * 50}%`;
+        // Spawn fireworks across the entire screen for better coverage
+        firework.style.left = `${5 + Math.random() * 90}%`;
+        firework.style.top = `${10 + Math.random() * 80}%`;
 
-        const particleCount = 10;
+        const particleCount = 12;
         for (let i = 0; i < particleCount; i += 1) {
             const particle = document.createElement('span');
             const angle = (Math.PI * 2 * i) / particleCount;
-            const distance = 80 + Math.random() * 60;
+            const distance = 90 + Math.random() * 70;
             particle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
             particle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
             particle.style.backgroundColor = CONFETTI_COLOURS[i % CONFETTI_COLOURS.length];
-            particle.style.animationDelay = `${Math.random() * 0.2}s`;
+            particle.style.animationDelay = `${Math.random() * 0.3}s`;
             firework.appendChild(particle);
         }
 
         container.appendChild(firework);
         setTimeout(() => {
-            firework.remove();
-        }, 1800);
+            if (firework.parentNode) {
+                firework.remove();
+            }
+        }, 2000);
     }
 
     stopConfetti() {
@@ -1111,7 +1137,7 @@ class Flip7Tracker {
     showWinnerBanner(playerName, totalPoints) {
         const banner = document.getElementById('winnerBanner');
         const winnerText = document.getElementById('winnerText');
-        winnerText.textContent = `${playerName} ${this.t('winsWith')} ${totalPoints} ${this.t('points')}`;
+        winnerText.innerHTML = `<strong>${this.escapeHtml(playerName)}</strong> ${this.t('winsWith')} ${totalPoints} ${this.t('points')}`;
         banner.classList.remove('hidden');
     }
 
@@ -1145,7 +1171,8 @@ class Flip7Tracker {
             gameWinner: this.gameWinner,
             scoringMode: this.scoringMode,
             scoreRules: this.scoreRules,
-            deckState: this.deckState
+            deckState: this.deckState,
+            deckSummaryVisible: this.deckSummaryVisible
         };
         localStorage.setItem('flip7GameState', JSON.stringify(state));
     }
@@ -1238,10 +1265,11 @@ Flip7Tracker.prototype.renderAdvancedCardControls = function renderAdvancedCardC
     const cardCounts = entry.cardCounts || buildEmptyCardCounts();
     const numberButtons = FLIP7_CARD_DEFINITIONS.numberCards.map(card => {
         const count = cardCounts[card.id] || 0;
+        const selectedClass = count > 0 ? ' card-btn-selected' : '';
         return `
             <button 
                 type="button" 
-                class="card-btn" 
+                class="card-btn${selectedClass}" 
                 data-player-id="${playerId}" 
                 data-card-id="${card.id}"
                 id="${inputId}-${card.id}"
@@ -1254,10 +1282,11 @@ Flip7Tracker.prototype.renderAdvancedCardControls = function renderAdvancedCardC
 
     const modifierButtons = FLIP7_CARD_DEFINITIONS.modifierCards.map(card => {
         const count = cardCounts[card.id] || 0;
+        const selectedClass = count > 0 ? ' card-btn-selected' : '';
         return `
             <button 
                 type="button" 
-                class="card-btn card-btn-modifier" 
+                class="card-btn card-btn-modifier${selectedClass}" 
                 data-player-id="${playerId}" 
                 data-card-id="${card.id}"
             >
@@ -1269,10 +1298,11 @@ Flip7Tracker.prototype.renderAdvancedCardControls = function renderAdvancedCardC
 
     const actionButtons = FLIP7_CARD_DEFINITIONS.actionCards.map(card => {
         const count = cardCounts[card.id] || 0;
+        const selectedClass = count > 0 ? ' card-btn-selected' : '';
         return `
             <button 
                 type="button" 
-                class="card-btn card-btn-action" 
+                class="card-btn card-btn-action${selectedClass}" 
                 data-player-id="${playerId}" 
                 data-card-id="${card.id}"
             >
@@ -1282,6 +1312,7 @@ Flip7Tracker.prototype.renderAdvancedCardControls = function renderAdvancedCardC
         `;
     }).join('');
 
+    const selectedCardsBubbles = this.renderSelectedCardsBubbles(playerId, cardCounts);
     const formulaLine = entry.formula
         ? `<div class="advanced-formula">${entry.formula}</div>`
         : '';
@@ -1302,10 +1333,11 @@ Flip7Tracker.prototype.renderAdvancedCardControls = function renderAdvancedCardC
             </div>
             <div class="card-group">
                 <div class="card-group-title">Actions</div>
-                <div class="card-grid">
+                <div class="card-grid card-grid-actions">
                     ${actionButtons}
                 </div>
             </div>
+            ${selectedCardsBubbles}
             ${formulaLine}
         </div>
     `;
@@ -1328,6 +1360,75 @@ Flip7Tracker.prototype.handleCardClick = function handleCardClick(playerId, card
 
     this.renderRoundInputs();
     this.updateSubmitState();
+};
+
+Flip7Tracker.prototype.handleRemoveCard = function handleRemoveCard(playerId, cardId) {
+    const entry = this.ensureDraftEntry(playerId);
+    if (!entry.cardCounts) {
+        entry.cardCounts = buildEmptyCardCounts();
+    }
+    const counts = entry.cardCounts;
+    if (counts[cardId] && counts[cardId] > 0) {
+        counts[cardId] = counts[cardId] - 1;
+    }
+
+    const result = this.calculateCardScoreFromCounts(counts);
+    entry.pendingScore = result.total;
+    entry.formula = result.formula;
+    entry.expression = '';
+    entry.score = null;
+    entry.frozen = false;
+
+    this.renderRoundInputs();
+    this.updateSubmitState();
+};
+
+Flip7Tracker.prototype.renderSelectedCardsBubbles = function renderSelectedCardsBubbles(playerId, cardCounts) {
+    const selectedCards = [];
+    
+    // Collect all selected cards with their counts
+    FLIP7_CARD_DEFINITIONS.numberCards.forEach(card => {
+        const count = cardCounts[card.id] || 0;
+        if (count > 0) {
+            selectedCards.push({ ...card, count, type: 'number' });
+        }
+    });
+    
+    FLIP7_CARD_DEFINITIONS.modifierCards.forEach(card => {
+        const count = cardCounts[card.id] || 0;
+        if (count > 0) {
+            selectedCards.push({ ...card, count, type: 'modifier' });
+        }
+    });
+    
+    FLIP7_CARD_DEFINITIONS.actionCards.forEach(card => {
+        const count = cardCounts[card.id] || 0;
+        if (count > 0) {
+            selectedCards.push({ ...card, count, type: 'action' });
+        }
+    });
+
+    if (selectedCards.length === 0) {
+        return '';
+    }
+
+    const bubbles = selectedCards.map(card => {
+        return `
+            <div class="selected-card-bubble" data-player-id="${playerId}" data-card-id="${card.id}">
+                <span class="bubble-label">${this.escapeHtml(card.label)}</span>
+                <span class="bubble-count">x${card.count}</span>
+                <button class="bubble-remove-btn" data-player-id="${playerId}" data-card-id="${card.id}" aria-label="Remove ${this.escapeHtml(card.label)}">×</button>
+            </div>
+        `;
+    }).join('');
+
+    return `
+        <div class="selected-cards-container">
+            <div class="selected-cards-bubbles">
+                ${bubbles}
+            </div>
+        </div>
+    `;
 };
 
 Flip7Tracker.prototype.calculateCardScoreFromCounts = function calculateCardScoreFromCounts(cardCounts) {
@@ -1439,18 +1540,37 @@ Flip7Tracker.prototype.getProvisionalDeck = function getProvisionalDeck() {
     return provisional;
 };
 
+Flip7Tracker.prototype.toggleDeckSummary = function toggleDeckSummary() {
+    this.deckSummaryVisible = !this.deckSummaryVisible;
+    this.renderDeckSummary();
+    this.saveGameState();
+};
+
 Flip7Tracker.prototype.renderDeckSummary = function renderDeckSummary() {
     const container = document.getElementById('deckSummary');
     if (!container) return;
     if (this.scoringMode !== 'advanced') {
         container.innerHTML = '';
+        container.classList.add('hidden');
         return;
     }
 
     const deck = this.getProvisionalDeck();
     const total = Object.values(deck).reduce((acc, v) => acc + v, 0);
+    
+    const toggleIcon = this.deckSummaryVisible ? '▼' : '▶';
+    const toggleText = this.deckSummaryVisible ? 'Hide' : 'Show';
+    
     if (total === 0) {
-        container.innerHTML = '<div class="deck-empty">Deck empty – will reset on next round.</div>';
+        container.innerHTML = `
+            <div class="deck-summary-toggle">
+                <button id="toggleDeckSummary" class="btn btn-light btn-small">
+                    <span class="toggle-icon">${toggleIcon}</span> ${toggleText} Deck &amp; Probabilities
+                </button>
+            </div>
+            ${this.deckSummaryVisible ? '<div class="deck-empty">Deck empty – will reset on next round.</div>' : ''}
+        `;
+        container.classList.toggle('hidden', !this.deckSummaryVisible);
         return;
     }
 
@@ -1493,25 +1613,33 @@ Flip7Tracker.prototype.renderDeckSummary = function renderDeckSummary() {
     });
 
     container.innerHTML = `
-        <div class="deck-summary-inner">
-            <div class="deck-summary-header">
-                <span>Deck &amp; probabilities</span>
-                <span class="deck-total">Total: ${total} cards</span>
-            </div>
-            <table class="deck-table">
-                <thead>
-                    <tr>
-                        <th>Card</th>
-                        <th>Remaining</th>
-                        <th>Chance</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${rows.join('')}
-                </tbody>
-            </table>
+        <div class="deck-summary-toggle">
+            <button id="toggleDeckSummary" class="btn btn-light btn-small">
+                <span class="toggle-icon">${toggleIcon}</span> ${toggleText} Deck &amp; Probabilities
+            </button>
         </div>
+        ${this.deckSummaryVisible ? `
+            <div class="deck-summary-inner">
+                <div class="deck-summary-header">
+                    <span>Deck &amp; probabilities</span>
+                    <span class="deck-total">Total: ${total} cards</span>
+                </div>
+                <table class="deck-table">
+                    <thead>
+                        <tr>
+                            <th>Card</th>
+                            <th>Remaining</th>
+                            <th>Chance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.join('')}
+                    </tbody>
+                </table>
+            </div>
+        ` : ''}
     `;
+    container.classList.remove('hidden');
 };
 
 let tracker;
