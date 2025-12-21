@@ -764,6 +764,17 @@ section h2 {
     font-size: 0.9em;
 }
 
+.bubble-probability {
+    font-weight: 600;
+    color: var(--primary-color);
+    font-size: 0.85em;
+    margin-left: 2px;
+}
+
+:root[data-theme='dark'] .bubble-probability {
+    color: #54a0ff;
+}
+
 .bubble-remove-btn {
     background: rgba(255, 87, 34, 0.15);
     border: 1px solid rgba(255, 87, 34, 0.4);

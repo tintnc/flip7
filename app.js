@@ -1417,6 +1417,14 @@ Flip7Tracker.prototype.handleRemoveCard = function handleRemoveCard(playerId, ca
     this.updateSubmitState();
 };
 
+Flip7Tracker.prototype.getCardProbability = function getCardProbability(cardId) {
+    const deck = this.getProvisionalDeck();
+    const total = Object.values(deck).reduce((acc, v) => acc + v, 0);
+    if (total === 0) return 0;
+    const remaining = deck[cardId] || 0;
+    return ((remaining / total) * 100);
+};
+
 Flip7Tracker.prototype.renderSelectedCardsBubbles = function renderSelectedCardsBubbles(playerId, cardCounts) {
     const selectedCards = [];
     
@@ -1447,10 +1455,13 @@ Flip7Tracker.prototype.renderSelectedCardsBubbles = function renderSelectedCards
     }
 
     const bubbles = selectedCards.map(card => {
+        const probability = this.getCardProbability(card.id);
+        const probabilityText = probability > 0 ? ` - ${probability.toFixed(0)}%` : ' - 0%';
         return `
             <div class="selected-card-bubble" data-player-id="${playerId}" data-card-id="${card.id}">
                 <span class="bubble-label">${this.escapeHtml(card.label)}</span>
                 <span class="bubble-count">x${card.count}</span>
+                <span class="bubble-probability">${probabilityText}</span>
                 <button class="bubble-remove-btn" data-player-id="${playerId}" data-card-id="${card.id}" aria-label="Remove ${this.escapeHtml(card.label)}">×</button>
             </div>
         `;
@@ -1589,97 +1600,9 @@ Flip7Tracker.prototype.togglePlayerExpanded = function togglePlayerExpanded(play
 Flip7Tracker.prototype.renderDeckSummary = function renderDeckSummary() {
     const container = document.getElementById('deckSummary');
     if (!container) return;
-    if (this.scoringMode !== 'advanced') {
-        container.innerHTML = '';
-        container.classList.add('hidden');
-        return;
-    }
-
-    const deck = this.getProvisionalDeck();
-    const total = Object.values(deck).reduce((acc, v) => acc + v, 0);
-    
-    const toggleIcon = this.deckSummaryVisible ? '▼' : '▶';
-    const toggleText = this.deckSummaryVisible ? 'Hide' : 'Show';
-    
-    if (total === 0) {
-        container.innerHTML = `
-            <div class="deck-summary-toggle">
-                <button id="toggleDeckSummary" class="btn btn-light btn-small">
-                    <span class="toggle-icon">${toggleIcon}</span> ${toggleText} Deck &amp; Probabilities
-                </button>
-            </div>
-            ${this.deckSummaryVisible ? '<div class="deck-empty">Deck empty – will reset on next round.</div>' : ''}
-        `;
-        container.classList.toggle('hidden', !this.deckSummaryVisible);
-        return;
-    }
-
-    const rows = [];
-    FLIP7_CARD_DEFINITIONS.numberCards.forEach(card => {
-        const remaining = deck[card.id] || 0;
-        if (remaining <= 0) return;
-        const probability = ((remaining / total) * 100).toFixed(1);
-        rows.push(`
-            <tr>
-                <td>${card.label}</td>
-                <td>${remaining}</td>
-                <td>${probability}%</td>
-            </tr>
-        `);
-    });
-    FLIP7_CARD_DEFINITIONS.modifierCards.forEach(card => {
-        const remaining = deck[card.id] || 0;
-        if (remaining <= 0) return;
-        const probability = ((remaining / total) * 100).toFixed(1);
-        rows.push(`
-            <tr>
-                <td>${card.label}</td>
-                <td>${remaining}</td>
-                <td>${probability}%</td>
-            </tr>
-        `);
-    });
-    FLIP7_CARD_DEFINITIONS.actionCards.forEach(card => {
-        const remaining = deck[card.id] || 0;
-        if (remaining <= 0) return;
-        const probability = ((remaining / total) * 100).toFixed(1);
-        rows.push(`
-            <tr>
-                <td>${card.label}</td>
-                <td>${remaining}</td>
-                <td>${probability}%</td>
-            </tr>
-        `);
-    });
-
-    container.innerHTML = `
-        <div class="deck-summary-toggle">
-            <button id="toggleDeckSummary" class="btn btn-light btn-small">
-                <span class="toggle-icon">${toggleIcon}</span> ${toggleText} Deck &amp; Probabilities
-            </button>
-        </div>
-        ${this.deckSummaryVisible ? `
-            <div class="deck-summary-inner">
-                <div class="deck-summary-header">
-                    <span>Deck &amp; probabilities</span>
-                    <span class="deck-total">Total: ${total} cards</span>
-                </div>
-                <table class="deck-table">
-                    <thead>
-                        <tr>
-                            <th>Card</th>
-                            <th>Remaining</th>
-                            <th>Chance</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${rows.join('')}
-                    </tbody>
-                </table>
-            </div>
-        ` : ''}
-    `;
-    container.classList.remove('hidden');
+    // Hide deck summary in advanced mode - probabilities now shown in bubbles
+    container.innerHTML = '';
+    container.classList.add('hidden');
 };
 
 let tracker;
