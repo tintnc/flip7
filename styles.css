@@ -138,8 +138,9 @@ header {
 
 .header-actions {
     display: flex;
-    gap: 10px;
+    gap: clamp(8px, 1.2vw, 10px);
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .lang-btn {
@@ -281,9 +282,10 @@ section h2 {
 }
 
 .btn-small {
-    padding: clamp(10px, 1.8vh, 14px) clamp(16px, 3vw, 20px);
+    padding: clamp(10px, 1.5vh, 14px) clamp(16px, 3vw, 20px);
     font-size: clamp(0.95rem, 2.2vw, 1.1rem);
-    min-height: clamp(40px, 4.5vh, 48px);
+    min-height: clamp(38px, 4vh, 44px);
+    max-height: 48px;
 }
 
 .players-list {
@@ -331,12 +333,14 @@ section h2 {
 .round-score-inputs {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
-    gap: clamp(10px, 2vh, 16px);
-    margin-bottom: clamp(12px, 2.5vh, 20px);
-    max-height: 60vh;
+    gap: clamp(10px, 1.5vh, 16px);
+    margin-bottom: clamp(12px, 2vh, 20px);
+    max-height: min(60vh, 600px);
     overflow-y: auto;
     padding-right: 4px;
 }
+
+/* Compact view is now default - styles below are always active */
 
 /* Grid layout: 2-3 columns based on screen size */
 @media (min-width: 768px) {
@@ -351,21 +355,21 @@ section h2 {
     }
 }
 
-/* Compact view: show only essential info */
-.round-score-inputs.compact-view .score-input-row {
-    padding: clamp(8px, 1.5vh, 12px);
+/* Compact view is default: show only essential info */
+.round-score-inputs .score-input-row {
+    padding: clamp(8px, 1.2vh, 12px);
 }
 
-.round-score-inputs.compact-view .score-input-row-simple {
+.round-score-inputs .score-input-row-simple {
     flex-direction: column;
     gap: clamp(6px, 1vh, 8px);
 }
 
-.round-score-inputs.compact-view .score-input-row-simple .row-header {
+.round-score-inputs .score-input-row-simple .row-header {
     margin-bottom: 0;
 }
 
-.round-score-inputs.compact-view .score-input-row-simple .score-actions {
+.round-score-inputs .score-input-row-simple .score-actions {
     width: 100%;
     flex-direction: row;
     justify-content: space-between;
@@ -373,26 +377,37 @@ section h2 {
     gap: clamp(6px, 1vw, 8px);
 }
 
-.round-score-inputs.compact-view .score-input-row-simple .freeze-actions {
+.round-score-inputs .score-input-row-simple .freeze-actions {
     flex: 0 0 auto;
     width: auto;
+    min-width: clamp(100px, 20vw, 130px);
 }
 
-.round-score-inputs.compact-view .score-input-row-simple .status-pill {
+.round-score-inputs .score-input-row-simple .freeze-actions .btn {
+    min-width: clamp(90px, 18vw, 120px);
+    padding: clamp(8px, 1.2vh, 12px) clamp(12px, 2.2vw, 16px);
+}
+
+.round-score-inputs .score-input-row-simple .status-pill {
     font-size: 0.75rem;
     padding: 3px 8px;
 }
 
-.round-score-inputs.compact-view .score-input-row-simple input.simple-score {
+.round-score-inputs .score-input-row-simple input.simple-score {
     width: 100%;
     flex: 1;
 }
 
-.round-score-inputs.compact-view .score-input-row-advanced.collapsed {
-    padding: clamp(8px, 1.5vh, 12px);
+.round-score-inputs .score-input-row-advanced.collapsed {
+    padding: clamp(8px, 1.2vh, 12px);
 }
 
-.round-score-inputs.compact-view .score-chip {
+.round-score-inputs .score-input-row-advanced .freeze-actions .btn {
+    min-width: clamp(100px, 20vw, 130px);
+    padding: clamp(8px, 1.2vh, 12px) clamp(12px, 2.2vw, 16px);
+}
+
+.round-score-inputs .score-chip {
     font-size: 0.75rem;
     padding: 4px 8px;
     margin-top: 4px;
@@ -417,17 +432,17 @@ section h2 {
     background: rgba(52, 199, 89, 0.1);
 }
 
-.round-score-inputs.compact-view .row-header {
+.round-score-inputs .row-header {
     margin-bottom: clamp(4px, 0.8vh, 6px);
 }
 
-.round-score-inputs.compact-view .row-header label {
+.round-score-inputs .row-header label {
     flex: 1;
     min-width: 0;
     font-size: clamp(0.95rem, 2.2vw, 1.05rem);
 }
 
-.round-score-inputs.compact-view .score-display {
+.round-score-inputs .score-display {
     font-size: clamp(1rem, 2.2vw, 1.2rem);
     padding: 3px 8px;
     margin-left: auto;
@@ -452,7 +467,7 @@ section h2 {
     }
 }
 
-.round-score-inputs.compact-view .score-input-row-advanced .score-actions {
+.round-score-inputs .score-input-row-advanced .score-actions {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
@@ -461,7 +476,7 @@ section h2 {
     margin-top: clamp(4px, 0.8vh, 6px);
 }
 
-.round-score-inputs.compact-view .score-input-row-advanced .freeze-actions {
+.round-score-inputs .score-input-row-advanced .freeze-actions {
     flex: 0 0 auto;
     width: auto;
 }
@@ -476,7 +491,7 @@ section h2 {
 
 .round-header-actions {
     display: flex;
-    gap: 12px;
+    gap: clamp(8px, 1.2vw, 12px);
     align-items: center;
     flex-wrap: wrap;
 }
@@ -527,8 +542,8 @@ section h2 {
 .score-input-row {
     display: flex;
     align-items: flex-start;
-    gap: clamp(8px, 1.5vh, 12px);
-    padding: clamp(12px, 2.5vh, 18px);
+    gap: clamp(8px, 1.2vh, 12px);
+    padding: clamp(10px, 2vh, 18px);
     background: var(--bg-color);
     border-radius: 8px;
     border: 2px solid var(--border-color);
@@ -571,8 +586,8 @@ section h2 {
     flex: 0 0 auto;
     align-self: flex-start;
     width: 100%;
-    margin-top: clamp(6px, 1.2vh, 10px);
-    padding-top: clamp(6px, 1.2vh, 10px);
+    margin-top: clamp(6px, 1vh, 10px);
+    padding-top: clamp(6px, 1vh, 10px);
     border-top: 1px solid var(--border-color);
 }
 
@@ -589,12 +604,14 @@ section h2 {
     flex: 0 0 auto;
     align-self: flex-start;
     min-width: 140px;
+    max-width: 200px;
 }
 
 @media (max-width: 767px) {
     .score-input-row-simple .score-actions {
         min-width: 100%;
         width: 100%;
+        max-width: 100%;
     }
 }
 
@@ -746,7 +763,7 @@ section h2 {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: clamp(14px, 2.5vh, 18px) clamp(16px, 3vw, 20px);
+    padding: clamp(12px, 2vh, 18px) clamp(16px, 3vw, 20px);
     border-radius: 999px;
     border: 2px solid var(--border-color);
     background: var(--card-bg);
@@ -755,7 +772,8 @@ section h2 {
     font-weight: 600;
     width: 100%;
     max-width: 100%;
-    min-height: clamp(44px, 5vh, 52px);
+    min-height: clamp(42px, 4.5vh, 50px);
+    max-height: 56px;
     transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
     white-space: nowrap;
     box-sizing: border-box;
@@ -838,8 +856,9 @@ section h2 {
     border-color: var(--warning-color);
     background: rgba(255, 204, 0, 0.05);
     min-width: clamp(160px, 32vw, 220px);
-    padding: clamp(14px, 2.5vh, 18px) clamp(20px, 4vw, 28px);
+    padding: clamp(12px, 2vh, 18px) clamp(20px, 4vw, 28px);
     gap: 10px;
+    max-height: 56px;
 }
 
 .card-btn-action:hover {
@@ -998,7 +1017,7 @@ section h2 {
 .score-actions {
     display: flex;
     flex-direction: column;
-    gap: clamp(10px, 1.5vh, 12px);
+    gap: clamp(8px, 1.2vh, 12px);
     align-self: flex-start;
     min-width: 160px;
     width: 100%;
@@ -1050,21 +1069,30 @@ section h2 {
 
 .freeze-actions {
     display: flex;
-    gap: clamp(10px, 2vw, 12px);
+    gap: clamp(8px, 1.5vw, 12px);
     flex-wrap: wrap;
     width: 100%;
+    align-items: center;
 }
 
 .freeze-actions .btn {
     flex: 1 1 auto;
-    min-width: clamp(120px, 25vw, 160px);
+    min-width: clamp(100px, 22vw, 140px);
+    max-width: 100%;
 }
 
 .round-actions {
     display: flex;
-    gap: clamp(8px, 1.5vh, 12px);
+    gap: clamp(8px, 1.2vh, 12px);
     justify-content: center;
-    margin-top: clamp(12px, 2.5vh, 20px);
+    margin-top: clamp(12px, 2vh, 20px);
+    flex-wrap: wrap;
+}
+
+.round-actions .btn {
+    flex: 1 1 auto;
+    min-width: clamp(140px, 28vw, 180px);
+    max-width: 100%;
 }
 
 .deck-summary {
@@ -1139,11 +1167,22 @@ section h2 {
     opacity: 0.5;
     cursor: not-allowed;
     transform: none;
+    pointer-events: none;
 }
 
 .btn:disabled:hover {
     transform: none;
     box-shadow: var(--shadow);
+    background: var(--primary-color);
+}
+
+.btn-primary:disabled {
+    background: var(--primary-color);
+    opacity: 0.5;
+}
+
+.btn-primary:disabled:hover {
+    background: var(--primary-color);
 }
 
 .score-board-grid {
@@ -1583,16 +1622,16 @@ footer {
 /* Vertical scaling optimizations for short screens */
 @media (max-height: 800px) {
     body {
-        padding: clamp(6px, 1.5vh, 12px);
+        padding: clamp(6px, 1.2vh, 12px);
     }
 
     header {
-        margin-bottom: clamp(8px, 2vh, 16px);
+        margin-bottom: clamp(8px, 1.5vh, 16px);
     }
 
     header h1 {
         font-size: clamp(1.3rem, 3.5vw, 1.8rem);
-        margin-bottom: clamp(3px, 0.8vh, 5px);
+        margin-bottom: clamp(3px, 0.6vh, 5px);
     }
 
     .subtitle {
@@ -1600,71 +1639,86 @@ footer {
     }
 
     section {
-        padding: clamp(10px, 2vh, 16px) clamp(10px, 2vh, 16px) clamp(8px, 1.5vh, 14px);
-        margin-bottom: clamp(8px, 1.5vh, 12px);
+        padding: clamp(10px, 1.8vh, 16px) clamp(10px, 1.8vh, 16px) clamp(8px, 1.2vh, 14px);
+        margin-bottom: clamp(8px, 1.2vh, 12px);
     }
 
     section h2 {
         font-size: clamp(1.1rem, 3vw, 1.3rem);
-        margin-bottom: clamp(10px, 2vh, 16px);
-        padding-bottom: clamp(6px, 1.2vh, 10px);
+        margin-bottom: clamp(10px, 1.8vh, 16px);
+        padding-bottom: clamp(6px, 1vh, 10px);
     }
 
     .round-score-inputs {
-        max-height: 45vh;
-        gap: clamp(8px, 1.5vh, 12px);
+        max-height: min(45vh, 500px);
+        gap: clamp(8px, 1.2vh, 12px);
     }
 
     .score-input-row {
-        padding: clamp(8px, 1.5vh, 12px);
-        gap: clamp(8px, 1.5vh, 12px);
+        padding: clamp(8px, 1.2vh, 12px);
+        gap: clamp(6px, 1vh, 10px);
     }
 
     .card-grid {
-        grid-template-columns: repeat(auto-fill, minmax(clamp(85px, 18vw, 110px), 1fr));
-        gap: clamp(12px, 2.5vw, 16px);
+        grid-template-columns: repeat(auto-fill, minmax(clamp(80px, 17vw, 105px), 1fr));
+        gap: clamp(10px, 2vw, 14px);
     }
 
     .card-grid-actions {
-        grid-template-columns: repeat(auto-fill, minmax(clamp(170px, 34vw, 240px), 1fr));
-        gap: clamp(16px, 3.5vw, 20px);
+        grid-template-columns: repeat(auto-fill, minmax(clamp(160px, 32vw, 220px), 1fr));
+        gap: clamp(14px, 3vw, 18px);
     }
 
     .card-btn {
-        padding: clamp(14px, 2.5vh, 18px) clamp(14px, 2.5vw, 18px);
-        font-size: clamp(1rem, 2.5vw, 1.15rem);
-        min-height: clamp(44px, 5vh, 52px);
+        padding: clamp(10px, 1.8vh, 16px) clamp(14px, 2.5vw, 18px);
+        font-size: clamp(0.95rem, 2.3vw, 1.1rem);
+        min-height: clamp(40px, 4vh, 48px);
+        max-height: 52px;
     }
 
     .card-btn-action {
-        min-width: clamp(160px, 32vw, 220px);
-        padding: clamp(14px, 2.5vh, 18px) clamp(20px, 4vw, 28px);
+        min-width: clamp(150px, 30vw, 200px);
+        padding: clamp(10px, 1.8vh, 16px) clamp(18px, 3.5vw, 26px);
+        max-height: 52px;
     }
 
     .card-group {
-        margin-bottom: clamp(10px, 2vh, 14px);
+        margin-bottom: clamp(8px, 1.5vh, 12px);
+    }
+
+    .score-actions {
+        gap: clamp(6px, 1vh, 10px);
+    }
+
+    .freeze-actions {
+        gap: clamp(6px, 1.2vw, 10px);
+    }
+
+    .freeze-actions .btn {
+        min-width: clamp(90px, 20vw, 120px);
+        padding: clamp(8px, 1.2vh, 12px) clamp(14px, 2.5vw, 18px);
     }
 
     .history-container {
-        max-height: 40vh;
+        max-height: min(40vh, 400px);
     }
 
     .modal-content {
-        max-height: min(85vh, 700px);
+        max-height: min(85vh, 650px);
     }
 
     .winner-content {
-        padding: clamp(24px, 4vh, 32px);
+        padding: clamp(20px, 3.5vh, 28px);
     }
 
     .winner-content h2 {
         font-size: clamp(1.8rem, 5vw, 2.2rem);
-        margin-bottom: clamp(10px, 2vh, 14px);
+        margin-bottom: clamp(10px, 1.8vh, 14px);
     }
 
     .winner-content p {
         font-size: clamp(1rem, 2.8vw, 1.2rem);
-        margin-bottom: clamp(16px, 3vh, 20px);
+        margin-bottom: clamp(16px, 2.5vh, 20px);
     }
 }
 
@@ -1684,6 +1738,12 @@ footer {
 
     .round-actions {
         flex-direction: column;
+    }
+
+    .round-actions .btn {
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
     }
 
     .round-score-inputs {
@@ -1728,14 +1788,16 @@ footer {
     }
 
     .card-btn {
-        padding: clamp(14px, 2.5vh, 18px) clamp(14px, 2.5vw, 18px);
-        font-size: clamp(1rem, 2.5vw, 1.15rem);
-        min-height: clamp(44px, 5vh, 52px);
+        padding: clamp(12px, 2vh, 16px) clamp(14px, 2.5vw, 18px);
+        font-size: clamp(0.95rem, 2.3vw, 1.1rem);
+        min-height: clamp(40px, 4vh, 48px);
+        max-height: 52px;
     }
 
     .card-btn-action {
-        min-width: clamp(150px, 33vw, 200px);
-        padding: clamp(14px, 2.5vh, 18px) clamp(18px, 3.5vw, 24px);
+        min-width: clamp(140px, 30vw, 190px);
+        padding: clamp(12px, 2vh, 16px) clamp(18px, 3.5vw, 24px);
+        max-height: 52px;
     }
 
     .card-group {
@@ -1751,15 +1813,41 @@ footer {
 /* Combined: narrow and short screens */
 @media (max-width: 768px) and (max-height: 800px) {
     .round-score-inputs {
-        max-height: 40vh;
+        max-height: min(40vh, 450px);
+    }
+
+    .score-input-row {
+        padding: clamp(8px, 1vh, 12px);
+        gap: clamp(6px, 0.8vh, 10px);
+    }
+
+    .score-actions {
+        gap: clamp(6px, 0.8vh, 10px);
+    }
+
+    .freeze-actions .btn {
+        min-width: clamp(80px, 18vw, 110px);
+        padding: clamp(8px, 1vh, 12px) clamp(12px, 2.2vw, 16px);
+    }
+
+    .card-btn {
+        padding: clamp(10px, 1.5vh, 14px) clamp(12px, 2.2vw, 16px);
+        min-height: clamp(38px, 3.8vh, 46px);
+        max-height: 50px;
+    }
+
+    .card-btn-action {
+        min-width: clamp(130px, 28vw, 180px);
+        padding: clamp(10px, 1.5vh, 14px) clamp(16px, 3vw, 22px);
+        max-height: 50px;
     }
 
     .history-container {
-        max-height: 35vh;
+        max-height: min(35vh, 350px);
     }
 
     .modal-content {
-        max-height: min(80vh, 600px);
+        max-height: min(80vh, 550px);
         width: 95%;
     }
 }

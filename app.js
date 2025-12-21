@@ -1,4 +1,4 @@
-const APP_VERSION = 'v0.3.0';
+const APP_VERSION = 'v0.4.0';
 const DEFAULT_RULES = [
     { id: 'rule-36', score: 36, icon: '🍀', label: 'Lucky 36' },
     { id: 'rule-18', score: 18, icon: '✌️', label: 'Calm 18' }
@@ -269,7 +269,7 @@ class Flip7Tracker {
         this.deckState = saved?.deckState || buildInitialDeckState();
         this.deckSummaryVisible = saved?.deckSummaryVisible !== undefined ? saved.deckSummaryVisible : false;
         this.playerExpandedStates = saved?.playerExpandedStates || {};
-        this.compactScoreView = saved?.compactScoreView !== undefined ? saved.compactScoreView : false;
+        this.compactScoreView = saved?.compactScoreView !== undefined ? saved.compactScoreView : true;
         // Initialize expanded states: first player expanded, others collapsed
         this.players.forEach((player, index) => {
             if (this.playerExpandedStates[player.id] === undefined) {
@@ -411,9 +411,6 @@ class Flip7Tracker {
         document.addEventListener('click', (event) => {
             if (event.target.id === 'toggleDeckSummary' || event.target.closest('#toggleDeckSummary')) {
                 this.toggleDeckSummary();
-            }
-            if (event.target.id === 'toggleCompactView' || event.target.closest('#toggleCompactView')) {
-                this.toggleCompactView();
             }
             if (event.target.classList.contains('expand-toggle-btn') || event.target.closest('.expand-toggle-btn')) {
                 const btn = event.target.closest('.expand-toggle-btn');
@@ -611,7 +608,7 @@ class Flip7Tracker {
                     <div class="row-header">
                         <span class="drag-handle" role="button" aria-label="${this.t('dragHandleLabel')}" title="${this.t('dragHandleLabel')}">⋮⋮</span>
                         <label for="${inputId}">${this.escapeHtml(player.name)}${labelIcon}</label>
-                        ${this.compactScoreView ? scoreDisplay : ''}
+                        ${scoreDisplay}
                         ${expandToggle}
                     </div>
                     ${inputArea}
@@ -631,21 +628,9 @@ class Flip7Tracker {
         this.updateSubmitState();
         this.enableRoundDragAndDrop();
         this.renderDeckSummary();
-        // Apply compact view state
+        // Always apply compact view (default)
         if (container) {
-            container.classList.toggle('compact-view', this.compactScoreView);
-        }
-        const toggleBtn = document.getElementById('toggleCompactView');
-        if (toggleBtn) {
-            toggleBtn.classList.toggle('active', this.compactScoreView);
-            const icon = toggleBtn.querySelector('.toggle-icon') || toggleBtn;
-            if (this.compactScoreView) {
-                icon.textContent = '📊';
-                toggleBtn.title = this.t('expandView') || 'Expand View';
-            } else {
-                icon.textContent = '📋';
-                toggleBtn.title = this.t('compactView') || 'Compact View';
-            }
+            container.classList.add('compact-view');
         }
     }
 
@@ -1635,26 +1620,7 @@ Flip7Tracker.prototype.renderDeckSummary = function renderDeckSummary() {
     container.classList.add('hidden');
 };
 
-Flip7Tracker.prototype.toggleCompactView = function toggleCompactView() {
-    this.compactScoreView = !this.compactScoreView;
-    const container = document.getElementById('roundScoreInputs');
-    if (container) {
-        container.classList.toggle('compact-view', this.compactScoreView);
-    }
-    const toggleBtn = document.getElementById('toggleCompactView');
-    if (toggleBtn) {
-        toggleBtn.classList.toggle('active', this.compactScoreView);
-        const icon = toggleBtn.querySelector('.toggle-icon') || toggleBtn;
-        if (this.compactScoreView) {
-            icon.textContent = '📊';
-            toggleBtn.title = this.t('expandView') || 'Expand View';
-        } else {
-            icon.textContent = '📋';
-            toggleBtn.title = this.t('compactView') || 'Compact View';
-        }
-    }
-    this.saveGameState();
-};
+// Compact view is now always enabled, toggle removed
 
 let tracker;
 document.addEventListener('DOMContentLoaded', () => {
