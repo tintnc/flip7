@@ -330,11 +330,140 @@ section h2 {
 
 .round-score-inputs {
     display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
     gap: clamp(10px, 2vh, 16px);
     margin-bottom: clamp(12px, 2.5vh, 20px);
     max-height: 60vh;
     overflow-y: auto;
     padding-right: 4px;
+}
+
+/* Grid layout: 2-3 columns based on screen size */
+@media (min-width: 768px) {
+    .round-score-inputs {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1200px) {
+    .round-score-inputs {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Compact view: show only essential info */
+.round-score-inputs.compact-view .score-input-row {
+    padding: clamp(8px, 1.5vh, 12px);
+}
+
+.round-score-inputs.compact-view .score-input-row-simple {
+    flex-direction: column;
+    gap: clamp(6px, 1vh, 8px);
+}
+
+.round-score-inputs.compact-view .score-input-row-simple .row-header {
+    margin-bottom: 0;
+}
+
+.round-score-inputs.compact-view .score-input-row-simple .score-actions {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: clamp(6px, 1vw, 8px);
+}
+
+.round-score-inputs.compact-view .score-input-row-simple .freeze-actions {
+    flex: 0 0 auto;
+    width: auto;
+}
+
+.round-score-inputs.compact-view .score-input-row-simple .status-pill {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+}
+
+.round-score-inputs.compact-view .score-input-row-simple input.simple-score {
+    width: 100%;
+    flex: 1;
+}
+
+.round-score-inputs.compact-view .score-input-row-advanced.collapsed {
+    padding: clamp(8px, 1.5vh, 12px);
+}
+
+.round-score-inputs.compact-view .score-chip {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    margin-top: 4px;
+}
+
+.score-display {
+    font-size: clamp(1.1rem, 2.5vw, 1.3rem);
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    margin-left: auto;
+    margin-right: 8px;
+}
+
+.score-display.pending {
+    color: var(--warning-color);
+    background: rgba(255, 204, 0, 0.1);
+}
+
+.score-display.frozen {
+    color: var(--success-color);
+    background: rgba(52, 199, 89, 0.1);
+}
+
+.round-score-inputs.compact-view .row-header {
+    margin-bottom: clamp(4px, 0.8vh, 6px);
+}
+
+.round-score-inputs.compact-view .row-header label {
+    flex: 1;
+    min-width: 0;
+    font-size: clamp(0.95rem, 2.2vw, 1.05rem);
+}
+
+.round-score-inputs.compact-view .score-display {
+    font-size: clamp(1rem, 2.2vw, 1.2rem);
+    padding: 3px 8px;
+    margin-left: auto;
+    margin-right: 4px;
+}
+
+/* Ensure grid items align properly */
+.round-score-inputs .score-input-row {
+    align-self: start;
+}
+
+/* Better spacing in grid */
+@media (min-width: 768px) {
+    .round-score-inputs {
+        gap: clamp(12px, 2vh, 18px);
+    }
+}
+
+@media (min-width: 1200px) {
+    .round-score-inputs {
+        gap: clamp(14px, 2.2vh, 20px);
+    }
+}
+
+.round-score-inputs.compact-view .score-input-row-advanced .score-actions {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: clamp(6px, 1vw, 8px);
+    padding-top: clamp(4px, 0.8vh, 6px);
+    margin-top: clamp(4px, 0.8vh, 6px);
+}
+
+.round-score-inputs.compact-view .score-input-row-advanced .freeze-actions {
+    flex: 0 0 auto;
+    width: auto;
 }
 
 .round-header {
@@ -343,6 +472,32 @@ section h2 {
     justify-content: space-between;
     gap: 12px;
     align-items: center;
+}
+
+.round-header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.compact-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    padding: 8px 12px;
+}
+
+.compact-toggle-btn .toggle-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.compact-toggle-btn.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
 }
 
 .scoring-tabs {
@@ -377,6 +532,14 @@ section h2 {
     background: var(--bg-color);
     border-radius: 8px;
     border: 2px solid var(--border-color);
+    min-height: fit-content;
+    height: fit-content;
+    transition: all var(--transition-fast);
+}
+
+.score-input-row:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.1);
 }
 
 .score-input-row-simple {
@@ -425,6 +588,14 @@ section h2 {
 .score-input-row-simple .score-actions {
     flex: 0 0 auto;
     align-self: flex-start;
+    min-width: 140px;
+}
+
+@media (max-width: 767px) {
+    .score-input-row-simple .score-actions {
+        min-width: 100%;
+        width: 100%;
+    }
 }
 
 .row-header {
@@ -1513,6 +1684,15 @@ footer {
 
     .round-actions {
         flex-direction: column;
+    }
+
+    .round-score-inputs {
+        grid-template-columns: 1fr;
+    }
+
+    .round-header-actions {
+        width: 100%;
+        justify-content: space-between;
     }
 
     .score-input-row {

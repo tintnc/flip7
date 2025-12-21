@@ -64,7 +64,9 @@ const translations = {
         enterExpressionPlaceholder: 'Example: 5 10 +2 x2',
         ruleScorePlaceholder: 'Score',
         ruleIconPlaceholder: 'Icon',
-        ruleLabelPlaceholder: 'Label'
+        ruleLabelPlaceholder: 'Label',
+        compactView: 'Compact View',
+        expandView: 'Expand View'
     },
     vi: {
         title: '🎴 Flip 7 Theo Dõi Điểm',
@@ -124,7 +126,9 @@ const translations = {
         enterExpressionPlaceholder: 'Ví dụ: 5 10 +2 x2',
         ruleScorePlaceholder: 'Điểm',
         ruleIconPlaceholder: 'Biểu tượng',
-        ruleLabelPlaceholder: 'Ghi chú'
+        ruleLabelPlaceholder: 'Ghi chú',
+        compactView: 'Xem Gọn',
+        expandView: 'Xem Đầy Đủ'
     }
 };
 
@@ -265,6 +269,7 @@ class Flip7Tracker {
         this.deckState = saved?.deckState || buildInitialDeckState();
         this.deckSummaryVisible = saved?.deckSummaryVisible !== undefined ? saved.deckSummaryVisible : false;
         this.playerExpandedStates = saved?.playerExpandedStates || {};
+        this.compactScoreView = saved?.compactScoreView !== undefined ? saved.compactScoreView : false;
         // Initialize expanded states: first player expanded, others collapsed
         this.players.forEach((player, index) => {
             if (this.playerExpandedStates[player.id] === undefined) {
@@ -406,6 +411,9 @@ class Flip7Tracker {
         document.addEventListener('click', (event) => {
             if (event.target.id === 'toggleDeckSummary' || event.target.closest('#toggleDeckSummary')) {
                 this.toggleDeckSummary();
+            }
+            if (event.target.id === 'toggleCompactView' || event.target.closest('#toggleCompactView')) {
+                this.toggleCompactView();
             }
             if (event.target.classList.contains('expand-toggle-btn') || event.target.closest('.expand-toggle-btn')) {
                 const btn = event.target.closest('.expand-toggle-btn');
@@ -566,6 +574,10 @@ class Flip7Tracker {
             const labelIcon = icons ? `<span class="special-icon">${icons}</span>` : '';
             const statusClass = entry.frozen ? 'frozen' : 'pending';
             const statusLabel = this.t(entry.frozen ? 'statusFrozen' : 'statusPending');
+            const currentScore = entry.frozen && entry.score !== null ? entry.score : (entry.pendingScore ?? null);
+            const scoreDisplay = currentScore !== null 
+                ? `<div class="score-display ${entry.frozen ? 'frozen' : 'pending'}">${this.formatScoreWithIcons(currentScore)}</div>`
+                : '';
             const pendingChip = !entry.frozen && entry.pendingScore !== null
                 ? `<div class="score-chip">${this.t('pendingScoreLabel')}: ${entry.pendingScore}</div>`
                 : '';
@@ -599,6 +611,7 @@ class Flip7Tracker {
                     <div class="row-header">
                         <span class="drag-handle" role="button" aria-label="${this.t('dragHandleLabel')}" title="${this.t('dragHandleLabel')}">⋮⋮</span>
                         <label for="${inputId}">${this.escapeHtml(player.name)}${labelIcon}</label>
+                        ${this.compactScoreView ? scoreDisplay : ''}
                         ${expandToggle}
                     </div>
                     ${inputArea}
@@ -618,6 +631,22 @@ class Flip7Tracker {
         this.updateSubmitState();
         this.enableRoundDragAndDrop();
         this.renderDeckSummary();
+        // Apply compact view state
+        if (container) {
+            container.classList.toggle('compact-view', this.compactScoreView);
+        }
+        const toggleBtn = document.getElementById('toggleCompactView');
+        if (toggleBtn) {
+            toggleBtn.classList.toggle('active', this.compactScoreView);
+            const icon = toggleBtn.querySelector('.toggle-icon') || toggleBtn;
+            if (this.compactScoreView) {
+                icon.textContent = '📊';
+                toggleBtn.title = this.t('expandView') || 'Expand View';
+            } else {
+                icon.textContent = '📋';
+                toggleBtn.title = this.t('compactView') || 'Compact View';
+            }
+        }
     }
 
     enableRoundDragAndDrop() {
@@ -1197,7 +1226,8 @@ class Flip7Tracker {
             scoreRules: this.scoreRules,
             deckState: this.deckState,
             deckSummaryVisible: this.deckSummaryVisible,
-            playerExpandedStates: this.playerExpandedStates
+            playerExpandedStates: this.playerExpandedStates,
+            compactScoreView: this.compactScoreView
         };
         localStorage.setItem('flip7GameState', JSON.stringify(state));
     }
@@ -1603,6 +1633,27 @@ Flip7Tracker.prototype.renderDeckSummary = function renderDeckSummary() {
     // Hide deck summary in advanced mode - probabilities now shown in bubbles
     container.innerHTML = '';
     container.classList.add('hidden');
+};
+
+Flip7Tracker.prototype.toggleCompactView = function toggleCompactView() {
+    this.compactScoreView = !this.compactScoreView;
+    const container = document.getElementById('roundScoreInputs');
+    if (container) {
+        container.classList.toggle('compact-view', this.compactScoreView);
+    }
+    const toggleBtn = document.getElementById('toggleCompactView');
+    if (toggleBtn) {
+        toggleBtn.classList.toggle('active', this.compactScoreView);
+        const icon = toggleBtn.querySelector('.toggle-icon') || toggleBtn;
+        if (this.compactScoreView) {
+            icon.textContent = '📊';
+            toggleBtn.title = this.t('expandView') || 'Expand View';
+        } else {
+            icon.textContent = '📋';
+            toggleBtn.title = this.t('compactView') || 'Compact View';
+        }
+    }
+    this.saveGameState();
 };
 
 let tracker;

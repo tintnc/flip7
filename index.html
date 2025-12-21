@@ -47,9 +47,14 @@
         <section class="current-round">
             <div class="round-header">
                 <h2><span data-i18n="round">Round</span> <span id="currentRoundNumber">1</span> - <span data-i18n="enterScores">Enter Scores</span></h2>
-                <div class="scoring-tabs" role="tablist">
-                    <button class="tab-button active" data-mode="simple" id="simpleModeTab" data-i18n="simpleMode">Simple Mode</button>
-                    <button class="tab-button" data-mode="advanced" id="advancedModeTab" data-i18n="advancedMode">Advanced Mode</button>
+                <div class="round-header-actions">
+                    <div class="scoring-tabs" role="tablist">
+                        <button class="tab-button active" data-mode="simple" id="simpleModeTab" data-i18n="simpleMode">Simple Mode</button>
+                        <button class="tab-button" data-mode="advanced" id="advancedModeTab" data-i18n="advancedMode">Advanced Mode</button>
+                    </div>
+                    <button id="toggleCompactView" class="btn btn-light btn-small compact-toggle-btn" title="Compact View">
+                        <span class="toggle-icon">📋</span>
+                    </button>
                 </div>
             </div>
             <div id="roundScoreInputs" class="round-score-inputs"></div>
